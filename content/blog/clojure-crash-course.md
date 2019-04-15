@@ -1187,5 +1187,143 @@ Clojure
 
 ## Destructuring and Function Arguments {#destructuring-and-function-arguments}
 
+At this point you have all the tools you need to start reading and writing
+Clojure. However, there is still a lot about the language we haven't touched
+on.
+
+Clojure and JavaScript share the convenient ability to destructure data. It
+is most commonly seen in function arguments, in `let` and in `loop`
+declarations.
+
+Sequences are destructured intuitively by placing a variable in each
+position of the collection:
+
+```clojure
+(let [[a b c] [1 2 3]]
+  (println a b c))
+```
+
+```clojure
+1 2 3
+```
+
+Instead of the spread operator, an `&` is used to indicate we would like to
+collect the rest of elements of a sequence:
+
+```clojure
+(let [[x & xs] [1 2 3 4]]
+  (println x)
+  (println xs))
+```
+
+```clojure
+1
+(2 3 4)
+```
+
+Note that the vector was destructured into a list.
+
+We can also destructure while preserving a variable referencing the whole
+structure using the `:as` keyword.
+
+```clojure
+(let [[x & xs :as coll] [1 2 3 4]]
+  (println x)
+  (println xs)
+  (println coll))
+```
+
+```clojure
+1
+(2 3 4)
+[1 2 3 4]
+```
+
+Map destructuring is slightly different. We specify a variable name and the
+key whose value we would like to associate it with.
+
+```clojure
+(let [{a :a, b :b, c :c} {:a 1, :b 2}]
+  (println a b c))
+```
+
+```clojure
+1 2 nil
+```
+
+When we try to destructure a value not present in our data, it is assigned
+`nil`. With maps, we can specify default data with `:or`.
+
+```clojure
+(let [{a :a, b :b, c :c, :or {c 8, b 12}} {:a 1, :b 2}]
+  (println a b c))
+```
+
+```clojure
+1 2 8
+```
+
+This is still pretty verbose, so there is an alternate syntax where we do
+automatically associate keys with the appropriate variable name.
+
+```clojure
+(let [{:keys [abc def ghi]} {:abc 1, :def 2, :ghi 3}]
+  (println abc def ghi))
+```
+
+```clojure
+1 2 3
+```
+
+But because we can use anything as a key, there is instead `:strs` and `:syms`
+for string and symbol keys respectively.
+
+```clojure
+(let [{:strs [abc def ghi]} {"abc" 1, "def" 2, "ghi" 3}]
+  (println abc def ghi))
+```
+
+```clojure
+1 2 3
+```
+
+```clojure
+(let [{:syms [abc def ghi]} {'abc 1, 'def 2, 'ghi 3}]
+  (println abc def ghi))
+```
+
+```clojure
+1 2 3
+```
+
+We can use all of these in function arguments as well.
+
+```clojure
+(defn boxed-inc [[x]] [(+ x 1)])
+(boxed-inc [2])
+```
+
+```clojure
+[3]
+```
+
+There is a special case of destructuring used for when we want to give
+functions keyword arguments.
+
+```clojure
+(defn sample-fn [a b c & {:keys [foo bar baz]
+                          :or {foo true, bar false}}]
+  (println a b c foo bar baz))
+
+(sample-fn 1 2 3 :bar "bar")
+```
+
+```clojure
+1 2 3 true "bar" nil
+```
+
+Keyword arguments are inherently optional and will be assigned `nil` if a
+default value is not given.
+
 
 ## Atoms and Transients {#atoms-and-transients}
