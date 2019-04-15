@@ -1,0 +1,6 @@
+baseURL = "http://blevs.dev/"
+languageCode = "en-us"
+title = "Henry Blevins - blevs.dev"
+pluralizelisttitles = false
+# pygmentsUseClasses = true
+pygmentsCodeFences = true

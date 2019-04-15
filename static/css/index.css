@@ -1,0 +1,374 @@
+/**
+ * Global Reset of all HTML Elements
+ *
+ * Resetting all of our HTML Elements ensures a smoother
+ * visual transition between browsers. If you don't believe me,
+ * try temporarily commenting out this block of code, then go
+ * and look at Mozilla versus Safari, both good browsers with
+ * a good implementation of CSS. The thing is, all browser CSS
+ * defaults are different and at the end of the day if visual
+ * consistency is what we're shooting for, then we need to
+ * make sure we're resetting all spacing elements.
+ *
+ */
+html,
+body {
+  border: 0;
+  font-family: "Helvetica-Neue", "Helvetica", Arial, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+div,
+span,
+object,
+iframe,
+img,
+table,
+caption,
+thead,
+tbody,
+tfoot,
+tr,
+tr,
+td,
+article,
+aside,
+canvas,
+details,
+figure,
+hgroup,
+menu,
+nav,
+footer,
+header,
+section,
+summary,
+mark,
+audio,
+video {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+address,
+cit,
+code,
+del,
+dfn,
+em,
+ins,
+q,
+samp,
+small,
+strong,
+sub,
+sup,
+b,
+i,
+hr,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+legend,
+label {
+  border: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+  margin: 0;
+  padding: 0;
+}
+article,
+aside,
+canvas,
+figure,
+figure img,
+figcaption,
+hgroup,
+footer,
+header,
+nav,
+section,
+audio,
+video {
+  display: block;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+table caption,
+table th,
+table td {
+  text-align: left;
+  vertical-align: middle;
+}
+a img {
+  border: 0;
+}
+:focus {
+  outline: 0;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  background: #fff6f1;
+}
+body .content {
+  flex: 1 0 auto;
+}
+h1 {
+  padding-left: 10%;
+  font-size: 9.6rem;
+  position: relative;
+  color: #4A4945;
+  max-width: 1920px;
+  width: 100%;
+  box-sizing: border-box;
+  text-shadow: 6px 6px #fff6f1, 8px 8px #dfba61;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQImWNgYGD4z0AswK4SAFXuAf8EPy+xAAAAAElFTkSuQmCC) repeat;
+}
+@media (max-width: 700px) {
+  h1 {
+    padding-left: 5%;
+    font-size: 25vw;
+  }
+}
+a {
+  position: relative;
+  transition: color 0.3s;
+  box-shadow: 0 -4px rgba(112, 170, 189, 0.8) inset;
+  border-bottom: 2px solid #70aabd;
+  transition: box-shadow 0.3s, text-shadow 0.3s;
+  cursor: pointer;
+  color: inherit;
+}
+a:hover {
+  box-shadow: 0 -6px #70aabd inset;
+  text-shadow: 1px 1px rgba(112, 170, 189, 0.2);
+}
+a:link {
+  text-decoration: none;
+}
+header {
+  background: #fff6f1;
+  width: 100%;
+  border-bottom: 6px solid #564f33;
+  border-top: 4px solid #697e6d;
+  box-shadow: 4px 4px #dfba61;
+  z-index: 100;
+}
+header .navigation {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px 2px;
+  font-size: 2.4rem;
+  overflow: hidden;
+  max-width: 1920px;
+  margin: 0 auto;
+}
+header .navigation a {
+  color: #564f33;
+  font-weight: bold;
+  position: relative;
+  box-shadow: none;
+  border-bottom: none;
+}
+header .navigation a:hover {
+  box-shadow: 0 -6px #70aabd inset;
+  text-shadow: 1px 1px rgba(112, 170, 189, 0.2);
+}
+header .navigation a:link {
+  text-decoration: none;
+}
+header .navigation nav a {
+  font-weight: normal;
+}
+footer {
+  box-shadow: 0 -8px #564f33, 0 -12px #697e6d, 0 -15px #dfba61, 0 -17px #ffb48b;
+  font-size: 2rem;
+  flex-shrink: 0;
+  background: #fff6f1;
+  margin-top: 15px;
+}
+.portfolio {
+  background: #fff6f1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.portfolio .pieces {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.portfolio .pieces .piece {
+  display: flex;
+  flex-direction: row;
+  margin: 25px 10px 25px 5px;
+  box-shadow: 8px 10px #564f33;
+  border: 2px solid #564f33;
+  background: rgba(255, 255, 255, 0.05);
+  max-width: 880px;
+}
+@media (max-width: 500px) {
+  .portfolio .pieces .piece {
+    flex-direction: column;
+    margin-left: 12px;
+    margin-right: 20px;
+  }
+}
+.portfolio .pieces .piece:nth-child(even) {
+  box-shadow: -8px 10px #564f33;
+  margin: 25px 5px 25px 10px;
+  flex-direction: row-reverse;
+}
+@media (max-width: 500px) {
+  .portfolio .pieces .piece:nth-child(even) {
+    flex-direction: column;
+    margin-left: 20px;
+    margin-right: 12px;
+  }
+}
+.portfolio .pieces .piece:nth-child(even) .img-container::after {
+  transform: rotate(45deg);
+}
+.portfolio .pieces .piece .img-container {
+  width: 30%;
+  background: grey;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  line-height: 0;
+}
+@media (max-width: 500px) {
+  .portfolio .pieces .piece .img-container {
+    width: 100%;
+  }
+}
+.portfolio .pieces .piece .img-container img {
+  object-fit: cover;
+  min-height: 100%;
+  width: 100%;
+}
+.portfolio .pieces .piece .img-container:hover::before {
+  opacity: 1;
+}
+.portfolio .pieces .piece .img-container::before {
+  content: "visit";
+  color: rgba(74, 73, 69, 0.8);
+  font-weight: bold;
+  font-size: 2.8rem;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQImWNgYGD4z0AswK4SAFXuAf8EPy+xAAAAAElFTkSuQmCC) repeat, radial-gradient(#00000000, #00000022);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.portfolio .pieces .piece .copy {
+  width: 70%;
+  padding-left: 20px;
+  font-size: 1.8rem;
+  color: #4A4945;
+  box-sizing: border-box;
+}
+@media (max-width: 500px) {
+  .portfolio .pieces .piece .copy {
+    padding: 0 10px;
+    width: 100%;
+  }
+}
+.portfolio .pieces .piece .copy h2 {
+  font-size: 2rem;
+  font-variant: small-caps;
+  color: #4A4945;
+  padding: 0 10px 0 5px;
+  display: inline-block;
+}
+.post h1 {
+  font-size: 6.8rem;
+  line-height: 1.3;
+}
+@media (max-width: 700px) {
+  .post h1 {
+    font-size: 4.2rem;
+  }
+}
+@media (max-width: 375px) {
+  .post h1 {
+    font-size: 4rem;
+  }
+}
+.post .copy {
+  padding: 0 5%;
+  box-sizing: border-box;
+  line-height: 1.5;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: 1.3rem;
+}
+.post .copy h2 {
+  font-size: 2rem;
+  font-variant: small-caps;
+  color: #4A4945;
+  padding: 0 10px 0 5px;
+  margin-top: 20px;
+}
+.post .copy h2,
+.post .copy h3,
+.post .copy h4,
+.post .copy h5 {
+  color: #4A4945;
+}
+.post .copy p {
+  padding: 10px 0;
+}
+.post .copy .highlight {
+  margin: 5px 0;
+  box-shadow: 8px 10px #564f33;
+  font-size: 1.2rem;
+}
+@media (max-width: 600px) {
+  .post .copy .highlight {
+    font-size: 1rem;
+  }
+}
+.post .copy .highlight pre {
+  overflow-x: auto;
+  padding: 10px;
+  box-sizing: border-box;
+}
+.post .copy details summary {
+  font-variant: small-caps;
+  color: #4A4945;
+  transition: background 0.3s;
+}
+.post .copy details summary:hover {
+  background: #dfba61;
+}

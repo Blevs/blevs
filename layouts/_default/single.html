@@ -1,0 +1,9 @@
+{{ partial "header.html" . }}
+{{ partial "navigation.html" . }}
+<article class="content post {{.Title|urlize}}">
+  <h1>{{.Title}}</h1>
+  <section class="copy">
+    {{.Content}}
+  </section>
+</article>
+{{ partial "footer.html" . }}

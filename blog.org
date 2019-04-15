@@ -1,0 +1,1260 @@
+#+hugo_base_dir: .
+* Blog
+  :PROPERTIES:
+  :export_hugo_section: blog
+  :header-args: :exports both :results code :eval never-export
+  :END:
+** Clojure Crash Course for JavaScript Developers :wfc:
+   :PROPERTIES:
+   :export_file_name: clojure-crash-course
+   :header-args:js: :session *Javascript REPL*
+   :END:
+   #+begin_src elisp :exports none
+     (defun org-babel-execute:clojure (body params)
+       "Execute a block of Clojure code with Babel.
+     The underlying process performed by the code block can be output
+     using the :show-process parameter."
+       (let* ((expanded (org-babel-expand-body:clojure body params))
+              (response (list 'dict))
+              result)
+         (cl-case org-babel-clojure-backend
+           (cider
+            (require 'cider)
+            (let ((result-params (cdr (assq :result-params params)))
+                  (show (cdr (assq :show-process params))))
+              (if (member show '(nil "no"))
+                  ;; Run code without showing the process.
+                  (progn
+                    (setq response
+                          (let ((nrepl-sync-request-timeout
+                                 org-babel-clojure-sync-nrepl-timeout))
+                            (nrepl-sync-request:eval expanded
+                                                     (cider-current-connection))))
+                    (message (format "%S" response))
+                    (setq result
+                          (concat
+                           (nrepl-dict-get response
+                                           (if (or (member "output" result-params)
+                                                   (member "pp" result-params))
+                                               "out"
+                                             "out"))
+                           (nrepl-dict-get response "ex")
+                           (nrepl-dict-get response "root-ex")
+                           (nrepl-dict-get response "err"))))
+                ;; Show the process in an output buffer/window.
+                (let ((process-buffer (switch-to-buffer-other-window
+                                       "*Clojure Show Process Sub Buffer*"))
+                      status)
+                  ;; Run the Clojure code in nREPL.
+                  (nrepl-request:eval
+                   expanded
+                   (lambda (resp)
+                     (when (member "out" resp)
+                       ;; Print the output of the nREPL in the output buffer.
+                       (princ (nrepl-dict-get resp "out") process-buffer))
+                     (when (member "ex" resp)
+                       ;; In case there is an exception, then add it to the
+                       ;; output buffer as well.
+                       (princ (nrepl-dict-get resp "ex") process-buffer)
+                       (princ (nrepl-dict-get resp "root-ex") process-buffer))
+                     (when (member "err" resp)
+                       ;; In case there is an error, then add it to the
+                       ;; output buffer as well.
+                       (princ (nrepl-dict-get resp "err") process-buffer))
+                     (nrepl--merge response resp)
+                     ;; Update the status of the nREPL output session.
+                     (setq status (nrepl-dict-get response "status")))
+                   (cider-current-connection))
+
+                  ;; Wait until the nREPL code finished to be processed.
+                  (while (not (member "done" status))
+                    (nrepl-dict-put response "status" (remove "need-input" status))
+                    (accept-process-output nil 0.01)
+                    (redisplay))
+
+                  ;; Delete the show buffer & window when the processing is
+                  ;; finalized.
+                  (mapc #'delete-window
+                        (get-buffer-window-list process-buffer nil t))
+                  (kill-buffer process-buffer)
+
+                  ;; Put the output or the value in the result section of
+                  ;; the code block.
+                  (setq result
+                        (concat
+                         (nrepl-dict-get response
+                                         (if (or (member "output" result-params)
+                                                 (member "pp" result-params))
+                                             "out"
+                                           "value"))
+                         (nrepl-dict-get response "ex")
+                         (nrepl-dict-get response "root-ex")
+                         (nrepl-dict-get response "err")))))))
+           (slime
+            (require 'slime)
+            (with-temp-buffer
+              (insert expanded)
+              (setq result
+                    (slime-eval
+                     `(swank:eval-and-grab-output
+                       ,(buffer-substring-no-properties (point-min) (point-max)))
+                     (cdr (assq :package params)))))))
+         (org-babel-result-cond (cdr (assq :result-params params))
+           result
+           (condition-case nil (org-babel-script-escape result)
+             (error result)))))
+   #+end_src
+   
+   #+begin_description
+   A quick trip through the world of Clojure while we prepare to implement the
+   Wave Function Collapse algorithm and build a frontend with ClojureScript.
+   #+end_description
+   
+   Welcome to the first post in my series detailing an implementation of
+   [[https://github.com/mxgmn/WaveFunctionCollapse][Wave Function Collapse]].
+
+   Before we start writing any code, we must talk about the programming language
+   we will be using --- Clojure. I assume most people following along are not
+   familiar with it, so I will teach you enough to read and follow along with
+   later articles.
+
+   Many of you may only have experience with a single programming language, and
+   the idea of learning another may seem daunting. Don't worry. Learning your
+   second language is much easier than the first, even though Clojure may seem
+   alien at first.
+    
+   In fact, many of the concepts integral to Clojure have made their way into
+   JavaScript. Things like anonymous functions, map/filter/reduce and
+   immutability will be familiar to you.
+    
+   If you would like to follow along, both [[https://repl.it/languages/clojure][repl.it]] and [[https://clojurescript.io/][clojurescript.io]] have
+   repls to get you started.
+
+*** Basic Syntax
+    In JavaScript, we invoke functions the way we expect from math class:
+
+    #+begin_src js
+      function inc(x) {
+          return x + 1;
+      }
+
+      inc(1);
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    2
+    #+end_src
+
+    Let's do the same thing in Clojure
+
+    #+begin_src clojure
+      (inc 1)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    2
+    #+end_src
+     
+    The parenthesis go on the outside. In Clojure, instead of invoking
+    functions with ~f(x)~, we do ~(f x)~. While initially confusing, it offers
+    distinct advantages. One is that is in the form of a list. This makes our
+    code data. We can edit, process and modify our code using the same tools we
+    use to work with data. We won't get into that here, but it is very cool.
+
+    Second, more practically, is that is almost all of the syntax you need to
+    know. With the exception of data literals (like vectors), and some common
+    macros, that is pretty much it. 
+     
+    That includes math:
+
+    In JavaScript
+    #+begin_src js
+    1 + 1
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    2
+    #+end_src
+     
+    In Clojure
+    #+begin_src clojure
+    (+ 1 1)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    2
+    #+end_src
+
+    Notice how there are no commas between arguments. In Clojure, we use
+    whitespace to separate arguments. 
+     
+    It is weird, right? But this lets us do things like this:
+
+    #+begin_src clojure
+    (+ 1 2 3 4 5 6)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    21
+    #+end_src
+
+    That discomfort you may feel reading it compared to JavaScript goes away
+    quickly, especially why you realize you don't have to constantly switch
+    between normal function, infix operators (like ~+~), and member functions.
+     
+*** Functions
+    In JavaScript, we define functions like so
+
+    #+begin_src js
+      function add(x, y) {
+          return x + y
+      }
+
+      add(1, 2);
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    3
+    #+end_src
+     
+    In Clojure
+    #+begin_src clojure
+      (defn add [x y]
+        (+ x y))
+
+      (add 1 2)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    3
+    #+end_src
+     
+    Here is the basic syntax:
+
+    #+begin_src clojure
+      (defun function-name [argument1 argument2 ...]
+        (body))
+    #+end_src
+     
+    We use a macro called ~defun~ and specify a function name. Note that we can,
+    and prefer, to use hyphenated (or kebabed) names for our functions. We get
+    to do this because ~-~ is a function in Clojure, not a special symbol that
+    must be reserved.
+     
+    Then, arguments are specified using a vector. Note the lack of commas.
+
+    Finally, the function body is defined. There is no explicit ~return~
+    statement as the body's value is automatically returned.
+
+    Before we move on we must touch on anonymous functions.
+
+    In JavaScript, we have two syntaxes: the function operator and the arrow function.
+    #+begin_src js
+      function(x) {
+          return x + 1;
+      }
+
+      (x) => {
+          return x + 1;
+      }
+    #+end_src
+     
+    In Clojure we also have two syntaxes: the function expression and the
+    reader macro.
+    #+begin_src clojure
+      (fn [x]
+        (+ x 1))
+
+      #(+ % 1)
+    #+end_src
+     
+    The first should be familiar and reasonable. Instead of using ~defn~, we
+    write ~fn~ with no function name.
+
+    The second is more cryptic. The reader macro is read by the Clojure parser
+    and transformed into the first form. It is indicated by a hashed
+    parenthesis ~#()~. Inside, the ~%~ is evaluated to the first argument. We can
+    use multiple arguments by adding an integer after the symbol.
+
+    #+begin_src clojure
+      ;; The same as the add function
+      #(+ %1 %2)
+      (#(+ %1 %2) 6 8)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    14
+    #+end_src
+
+*** Special Forms and Flow Control
+    What if we want to do multiple things inside of our function body? There is
+    always the ~do~ macro. This gives us an environment similar to JavaScript,
+    where each line is executed independently. The value of the last expression
+    executed is returned.
+     
+    #+begin_src clojure
+      (do
+        (println "Hello, World!") (println 2)
+        (+ 1 2))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    Hello, World!
+    2
+    3
+    #+end_src
+     
+    As you can see, ~println~ is our equivalent to ~console.log~.
+     
+    Conditional logic is also important. In Clojure, ~if~ is an expression. It
+    evaluates a statement, and then if it is true or false it executes the
+    appropriate branch and returns its value.
+
+    #+begin_src clojure
+      (if true
+        "yes" ;; true branch
+        "no") ;; false branch
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    "yes"
+    #+end_src
+     
+    We can use this returned value inside of other expressions
+
+    #+begin_src clojure
+      (+ 2 (if false 3 4))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    6
+    #+end_src
+     
+    This is very similar to the ternary operator in JavaScript
+    #+begin_src js
+      2 + (false ? 3 : 4)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    6
+    #+end_src
+     
+    Same effect, but look at how much simpler the Clojure syntax is.
+     
+    If you want to chain together ~if~'s and ~else~'s like in JavaScript, use [[https://clojuredocs.org/clojure.core/cond][cond]]
+    instead.
+     
+    We also have access to our same toolkit of logical operators, but in
+    Clojure they are functions instead of symbols.
+     
+    #+begin_src clojure
+      (println (and true false)
+               (or true false)
+               (not true)
+               (= 1 2)
+               (= 1 1))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+      false 
+      true
+      false
+      false
+      true
+    #+end_src
+     
+    You may be weirded out to see the equals sign used to test equality instead
+    of assigning values. 
+
+*** Variables
+    In Clojure, we handle variables a bit differently. We tend to work with our
+    data by passing it from one function to the next, instead of storing it in
+    a variable and mutating it.
+
+    However, we still want to be able to associate constant values with names,
+    and to use the results of a computation in multiple places.
+
+    In the tradition we are more familiar with, Clojure has the ~def~ macro.
+    #+begin_src clojure
+      (def a 1)
+      (println a)
+      (println (+ a 2))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    1
+    3
+    #+end_src
+     
+    It defines a variable to a name. It is roughly equivalent to ~const~ in the
+    global scope in JavaScript. We *do not* use ~def~ inside functions to make
+    local variables.
+     
+    Instead, the ~let~ macro is used. 
+    #+begin_src clojure
+      (let [a 1
+            b (+ a 2)]
+        (+ a b))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    4
+    #+end_src
+     
+    Here is the basic syntax:
+    #+begin_src clojure
+      (let [variable1 expression1
+            variable2 expression2
+            ...]
+        (body))
+    #+end_src
+     
+    It takes a vector of variable names and expressions. The expressions are
+    evaluated and the variables are bound to their value within ~body~. We can
+    reference earlier variables within the expressions for later variables.
+     
+    Again, they are constant and we do not mutate their values.
+     
+*** Data Structures
+    We are on to our last bits of syntax.
+**** Numbers
+     Like JavaScript we have integer and decimal (floating point) numbers. We
+     also have fractional numbers.
+      
+     Math is straightforward, with the expected symbols defined as function.
+     #+begin_src clojure
+       1
+       2.5
+       (+ 3 4.6) ; -> 7.6
+       (/ 2 4)   ; -> 1/2
+       (2 / 4.0) ; -> 0.5
+       (inc 2)   ; -> 3
+       (dec 3)   ; -> 2
+     #+end_src
+
+**** Strings
+     Strings are also much as we expect, but unlike JavaScript they are always
+     enclosed by double quotes, or created with the ~str~ function.
+      
+     #+begin_src clojure
+       "I'm a string"
+       (str "test" "other")
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     "testother"
+     #+end_src
+      
+     Also unlike JavaScript, things like addition are not overloaded to handle
+     strings.
+
+     #+begin_src clojure
+       (+ "1" "b")
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     class java.lang.ClassCastExceptionclass java.lang.ClassCastExceptionExecution error (ClassCastException) at user/eval7088 (REPL:2).
+     java.lang.String cannot be cast to java.lang.Number
+     #+end_src
+      
+     Instead, functions to work with strings are found in the ~clojure.string~
+     namespace. A further discussion of namespaces are needed, but for now we
+     access their functions and variables by stating a namespace followed by a
+     slash and the name of what we want to access.
+      
+     #+begin_src clojure
+       (println
+        (clojure.string/trim "     trim me    ")
+        (clojure.string/lower-case "ABC")
+        (clojure.string/reverse "olleh")
+        (clojure.string/join ", " ["a" "b" "c"])
+        )
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+       "trim me"
+       "abc"
+       "hello"
+       "a, b, c"
+     #+end_src
+
+**** Keywords
+     #+begin_src clojure
+       :a
+       :i-am-a-keyword
+       (keyword "test") ; :test
+     #+end_src
+
+     Keywords are new. They are identifiers and you can think of them as fast,
+     constant strings. Keywords are commonly used as /keys/ in /maps/. They're
+     great and you will see why later.
+
+**** Vectors
+     We have already seen vectors in a few places, like defining function
+     arguments. Like arrays in JavaScript, they are enclosed by square
+     brackets. They do not need commas by default, but they can be used.
+
+     #+begin_src clojure
+       [1 2 3]
+       ["a", 4, (fn [x] (+ x 2))]
+     #+end_src
+      
+     There are a host of functions for working with them.
+     #+begin_src clojure
+       ;; index access
+       (nth [1 2 3] 0)   ; 1
+       (get [1 2 3] 0)   ; 1
+       ;; conventiently get the first few elements
+       (first [1 2 3])   ; 1
+       (second [1 2 3])  ; 2
+       (rest [1 2 3])    ; [2 3]
+       ;; add an element to the end
+       (conj [1 2 3] 4)
+       ;; remove an element from the end
+       (pop [1 2 3])     ; [1 2]
+       ;; get last element
+       (peek [1 2 3])    ; 3
+       ;; replace element at index
+       (assoc ["a" "c" "c"] 1 "b") ; ["a" "b" "c"]
+       ;; create a vector
+       (vector 1 2 3)    ; [1 2 3]
+     #+end_src
+      
+     Note that all of these operations are *immutable*. For example:
+     #+begin_src clojure
+       (def test-vector [1 2 3])
+       (println (conj test-vector 4))
+       (println test-vector)
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     [1 2 3 4]
+     [1 2 3]
+     #+end_src
+      
+     Modifying a vector, or any of our basic data structures, creates a new
+     copy and does not change the old value or any variables associated with
+     it. Your first thought might be that sounds slow, wasteful or
+     inconvenient.
+
+     Immutable data structures are fast and wonderful. They are fast because
+     they are implemented using persistent data structures, which is to say
+     instead of creating an entirely new vector every time we add an element on
+     the end of swap one out, Clojure creates a vector that references the
+     original and only stores the newly created or modified elements.
+
+     While that does introduce some overhead it makes data incredibly
+     convenient to reason about. We never have to worry about a function
+     changing data it doesn't explicitly return. If you have worked with modern
+     JavaScript frameworks, you may realize how annoying unexpected mutation
+     can be and annoyed by how frequently you visit [[https://doesitmutate.xyz]].
+      
+
+     #+begin_src js
+       // numbers
+       1
+       2.3
+       // strings
+       "Hello, World!"
+       // vectors
+       [1, 2, 3]
+       // objects
+       { a: 1, b: 2 }
+     #+end_src
+     
+     In Clojure, we have all of these and more.
+     #+begin_src clojure
+       ;; numbers (comments use ; instead of //)
+       1
+       2.3
+       ;; strings
+       "Hello, World!"
+       ;; keywords
+       :not-a-string
+       ;; vectors
+       [1 2 3]
+       ;; lists
+       '(1 2 3)
+       ;; maps (objects but, only data)
+       {:a 1 :b 2}
+       {"a" 1, 3 :b}
+       ;; sets (only one of each element)
+       #{1 2 3}
+     #+end_src
+
+**** Lists
+     We also have lists. They are like our code, but with a ~'~ in front
+     indicating it is a literal value.
+      
+     #+begin_src clojure
+       '(1 2 3)
+       (list 1 2 3) ; '(1 2 3)
+     #+end_src
+
+     They are similar to vectors, but each element is internally linked to the
+     next. We have to traverse the list to access elements, but it is very fast
+     to add items to the front. They are also /lazy/, which we will explain
+     later.
+
+     #+begin_src clojure
+       ;; index access (works, but is slow)
+       (nth '(1 2 3) 2)   ; 3
+       ;; get doesn't work, because it is technically key lookup
+       (get '(1 2 3) 0)   ; nil
+       ;; conventiently get the first few elements
+       (first '(1 2 3))   ; 1
+       (second '(1 2 3))  ; 2
+       (rest '(1 2 3))    ; '(2 3)
+       ;; add an element to the front
+       (conj '(2 3 4) 1)  ; '(1 2 3 4)
+       (cons 1 '(2 3 4))  ; '(1 2 3 4)
+       ;; remove an element from the front
+       (pop '(1 2 3))     ; '(2 3)
+       ;; get last element
+       (last '(1 2 3))    ; 3
+       ;; create a list
+       (list 1 2 3)       ; '(1 2 3)
+     #+end_src
+      
+     If you are paying close attention you may have noticed something strange.
+     ~conj~ and ~pop~ add and removes items from the /beginning/ of a list, but add
+     and remove items from the /end/ of a vector.
+      
+     This is because it is efficient to add and remove items from the beginning
+     of a list, and efficient to add and remove items at the end of a vector.
+      
+     The efficient option is performed by default, and adding items to the end
+     of a list or the beginning of a vector is made deliberately difficult
+     because it means you should either pick another data structure or be aware
+     of the detriment to performance.
+
+**** Maps
+     Maps are like Objects, but they lack prototype functions. Unlike
+     JavaScript, we can use any data type as the key. We can also use commas if
+     we like to make them easier to read. 
+      
+     #+begin_src clojure 
+       {:a 1 :b 2}
+       {:a 1, :b 2}
+       {1 2, 3 4}
+       (hash-map :a 1 :b 2)
+     #+end_src
+      
+     We commonly use keywords as keys in maps because the are fast, and we can
+     also use them as functions to access their value
+      
+     #+begin_src clojure
+       (:b {:a 1 :b 2})
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     2
+     #+end_src
+      
+     You can think of this as a Clojure equivalent to ~Object.property~ syntax in
+     JavaScript. Note that it does not work with other types:
+     #+begin_src clojure
+       ("b" {"a" 1 "b" 2})
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     class java.lang.ClassCastExceptionclass java.lang.ClassCastExceptionExecution error (ClassCastException) at user/eval7164 (REPL:2).
+     java.lang.String cannot be cast to clojure.lang.IFn
+     #+end_src
+
+     The functions that operate on them have significant overlap with vectors
+     as maps and vectors are implemented very similarly.
+      
+     #+begin_src clojure
+       ;; get value
+       (get {:a 1 :b 2} :a)             ; 1
+       (:a {:a 1 :b 2})                 ; 1
+       (get {"a" 1 "b" 2} "b")          ; 2
+       ;; add or change a value for a given key
+       (assoc {:a 1 :b 2} :c 3)         ; {:a 1 :b 2 :c 3}
+       (assoc {:a 1 :b 2} :b 3)         ; {:a 1 :b 3}
+       ;; add a pair
+       (conj {:a 1 :b 2} [:c 3])        ; {:a 1 :b 2 :c 3}
+       ;; merge maps
+       (merge {:a 1 :b 2} {:b 3 :c 4})  ; {:a 1 :b 3 :c 4}
+       ;; remove a key and value
+       (dissoc {:a 1 :b 2} :b)          ; {:a 1}
+       ;; get a subset of the map
+       (select-keys {:a 1 :b 2 :c 3} [:a :b]) ; {:a 1 :b 2}
+     #+end_src
+
+**** More
+     Clojure has more built in data structures, like sets, sorted-sets,
+     sorted-maps and a few more.
+      
+     Clojure also has a very large standard library full of incredibly useful,
+     specific and well named functions for working with and creating data. You
+     can find them all on [[https://clojuredocs.org/core-library][ClojureDocs]]. We will use some of them in the
+     concluding example problems.
+*** Sequence functions and Laziness
+    One of the best things to happen to JavaScript was the addition of the
+    sequence functions ~map~, ~filter~ and ~reduce~. Map applies an operation each
+    element of a sequence and returns the resulting sequence. Filter performs a
+    test on each element and keeps those that pass. Reduce takes an accumulator
+    value and folds each element into that accumulator.
+
+    In Clojure, they all have the same syntax:
+    #+begin_src clojure
+      (map function collection)
+      (filter function collection)
+      (reduce function collection) ;; function is of two variables
+    #+end_src
+     
+    In JavaScript, if we wanted to double each number of an array:
+    #+begin_src js 
+      [1, 2, 3].map(x => x * 2)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    [2,4,6]
+    #+end_src
+     
+    In Clojure the following are equivalent:
+    #+begin_src clojure
+      (map (fn [x] (* x 2)) [1 2 3])
+      (map #(* % 2) [1 2 3])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    (2 4 6)
+    #+end_src
+     
+    We can use a reducer to sum an array. In JavaScript:
+    #+begin_src js
+      [1, 2, 3].reduce((acc, x) => acc + x)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    6
+    #+end_src
+     
+    In Clojure:
+    #+begin_src clojure
+      (reduce (fn [acc x] (+ acc x)) [1 2 3])
+      (reduce #(+ %1 %2) [1 2 3])
+      (reduce + [1 2 3])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    6
+    #+end_src
+     
+    You can also see why it is an advantage to have ~+~ be a function.
+     
+    We could use a filter to remove odd elements. In JavaScript:
+    #+begin_src js
+      [1, 2, 3, 4].filter(x => x % 2 === 0)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    [2,4]
+    #+end_src
+     
+    In Clojure:
+    #+begin_src clojure
+      (filter (fn [x] (even? x)) [1 2 3 4])
+      (filter #(even? %) [1 2 3 4])
+      (filter even? [1 2 3 4])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    (2 4)
+    #+end_src
+     
+    If you have a sharp eye, you may have noticed that ~map~ and ~filter~ returned
+    lists even though we gave them vectors. Herein lies a powerful difference
+    with the Clojure functions --- they are lazy.
+     
+    What this means is that these functions do not actually execute on each
+    element of a sequence until that value is needed.
+
+    For example, the ~take~ function will take the first n elements from a
+    sequence. The ~range~ function will produce a list of numbers from 0 to n. 
+    If we map over a collection, but only take the first 3, then those three
+    elements are the only ones whose values are calculated.
+
+    #+begin_src clojure 
+      (take 3 (map #(* % 2) (range 1000000000)))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    (2 4 6)
+    #+end_src
+     
+    Don't believe me? Let's check:
+    #+begin_src clojure 
+      (take 3 (map #(or (println %) (* % 2)) (range 1000000000)))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    0
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+    10
+    11
+    12
+    13
+    14
+    15
+    16
+    17
+    18
+    19
+    20
+    21
+    22
+    23
+    24
+    25
+    26
+    27
+    28
+    29
+    30
+    31
+    (0 2 4)
+    #+end_src
+     
+    It turns out that for most cases it is actually more efficient to
+    calculate them in chunks of 32 elements. So it is not a silver bullet for
+    avoiding needless computation, but it does help and it does let us do some
+    really cool things. Like the fact that ~range~, when given no argument,
+    produces an infinite sequence of numbers. You read that right. Laziness
+    allows us to produce infinite sequences and only consume the part we need.
+
+    ~cycle~ takes a sequence and returns an infinitely repeating sequence.
+    #+begin_src clojure
+      (take 10 (cycle [1 2 3]))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    (1 2 3 1 2 3 1 2 3 1)
+    #+end_src
+     
+    ~iterate~ applies a function ~f~ to ~x~, then ~f~ to that result, and so on,
+    infinitely.
+    #+begin_src clojure
+      (take 10 (iterate #(* % 2) 1))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    (1 2 4 8 16 32 64 128 256 512)
+    #+end_src
+     
+    If we don't want our sequence functions to be lazy, we use versions that
+    return vectors, which are not lazy sequences.
+    #+begin_src clojure
+      (mapv #(* % 2) [1 2 3])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    [2 4 6]
+    #+end_src
+
+    #+begin_src clojure
+      (filterv even? [1 2 3 4])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    [2 4]
+    #+end_src
+     
+*** Threading Macros
+    Threading Macros are my favorite part of Clojure. Commonly, we perform
+    sequence functions one after another in a pattern similar to ~map~, then
+    ~filter~, then ~reduce~.
+
+    In JavaScript, we do this via method chaining:
+    #+begin_src js
+      [1, 2, 3, 4]
+          .map(x => x * 3)
+          .filter(x => x % 2 === 0)
+          .reduce((acc, x) => acc + x);
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src js
+    18
+    #+end_src
+     
+    This looks nice and is easy to read. In Lisps, we would traditionally nest
+    these function calls.
+    #+begin_src clojure
+      (reduce + (filter even? (map #(* % 3) [1 2 3 4])))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    18
+    #+end_src
+     
+    This isn't too bad, but you can see how this gets out of hand. That is why
+    Clojure introduced the threading macros. They allow a convenient format for
+    us to repeatedly apply transformations to our data.
+
+    There is the thread-last macro, ~->>~, that takes a value and applies it as
+    the last argument to the first expression, applies the result of that
+    expression as the last argument to the next, and so on. It is easier to
+    demonstrate:
+    #+begin_src clojure
+      (->> [1 2 3 4]
+           (map #(* % 2)) ;; [3 6 9 12]
+           (filter even?) ;; [6 12]
+           (reduce +))    ;; 18
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    18
+    #+end_src
+     
+    If you are not sure what is happening, let me illustrate with commas
+    indicating where the value is applied. (Remember, commas are whitespace, we
+    can put them anywhere).
+    #+begin_src clojure
+      (->> [1 2 3 4]
+           (map #(* % 2) ,,,) ;; [3 6 9 12]
+           (filter even? ,,,) ;; [6 12]
+           (reduce +) ,,,)    ;; 18
+    #+end_src
+     
+    We map over ~[1 2 3 4]~, we ~filter~ over that result, and then ~reduce~ it. 
+
+    The advantage over method chaining is clear as soon as you hit a JavaScript
+    function that is not a method. 
+     
+    Thread-last is traditionally used on operations that involve transforming
+    sequences. You will notice those functions take the collection last.
+
+    You may have guessed there is also thread-first macro, ~->~. It is often used
+    when transforming singular data types and also when modifying maps. It
+    applies the data, and intermittent values, as the first argument to each
+    expression.
+     
+    #+begin_src clojure
+      (-> {:a 1 :b 2}
+          (assoc ,,, :c 3)
+          (dissoc ,,, :a))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    {:b 2, :c 3}
+    #+end_src
+     
+    #+begin_src clojure
+      (-> "     test string     "
+          (clojure.string/trim ,,,)
+          (clojure.string/upper-case ,,,)
+          (clojure.string/reverse ,,,))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    "GNIRTS TSET"
+    #+end_src
+
+*** Loops
+    We haven't talked about for or while loops yet. In most Lisps, we avoid
+    these by instead using recursion. Lisps tend to have a feature called
+    tail-call optimization that allows us to recur without allocating memory
+    for each function call added to the stack. Because Clojure is built on top
+    of Java it does not have this feature, and likely never well.
+
+    Instead, it has a ~loop~ macro that enables us to perform a sort of
+    recursion. It takes a vector of variables and expressions, and binds the
+    variables to the values of those expressions, just like ~let~.
+     
+    Then, in its body, it either evaluates to a value, or calls ~recur~. ~recur~
+    executes the loop body again, but binds the arguments to the variables.
+    #+begin_src clojure 
+      (loop [variable1 expression1
+             variable2 expresssion2
+             ...]
+        (body))
+
+      (loop [variable1 expression1
+             variable2 expresssion2
+             ...]
+        ;; commonly
+        (if some-test
+          result
+          (recur (transform variable1) (transform variable2))))
+    #+end_src
+     
+    Let's implement summing a list using traditional recursion.
+    #+begin_src clojure
+      (defn sum-recursively [acc xs]
+        (if (empty? xs)
+          acc
+          (sum-recursively (+ acc (first xs)) (rest xs))))
+
+      (defn sum [coll]
+        (sum-recursively 0 coll))
+
+      (sum [1 2 3 4 5])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    15
+    #+end_src
+     
+    In most other Lisps, this would be fine, but if we try it on a large
+    collection we will get a stack overflow.
+    #+begin_src clojure
+      (sum (range 10000000))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    class java.lang.StackOverflowErrorclass java.lang.StackOverflowErrorExecution error (StackOverflowError) at user/eval5761$sum-recursively (REPL:5).
+    null
+    #+end_src
+     
+    However, with some minor modifications we can safely use ~loop~.
+    #+begin_src clojure
+      (defn sum [coll]
+        (loop [acc 0
+               xs coll]
+          (if (empty? xs)
+            acc
+            (recur (+ acc (first xs)) (rest xs)))))
+
+      (sum [1 2 3 4 5])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    15
+    #+end_src
+
+    #+begin_src clojure
+      (sum (range 10000000))
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    49999995000000
+    #+end_src
+     
+*** Example Problems
+    To give some context to what we have talked about, and some additional
+    content, here are some coding challenges to attempt and/or read to get a
+    feel for Clojure.
+**** Longest String in an Array
+     Find the longest string in a given array. 
+     #+begin_details
+     #+begin_summary
+     JavaScript
+     #+end_summary
+     #+begin_src js
+       const strings = ["short", "really really long!", "medium"]
+       strings.reduce((acc, x) => (x.length > acc.length ? x : acc))
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src js
+     "really really long!"
+     #+end_src
+
+     #+end_details
+     #+begin_details
+     #+begin_summary
+     Clojure
+     #+end_summary
+     #+begin_src clojure
+       (def strings ["short" "really really long!" "medium"])
+       (reduce #(if (> (count %2) (count %1)) %2 %1) strings)
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     "really really long!"
+     #+end_src
+
+     Advanced Solution: Clojure has [[https://clojuredocs.org/clojure.core/max-key][max-key]], which applies a function its
+     arguments and returns the value that gives the maximum result.
+     #+begin_src clojure
+       (def strings ["short" "really really long!" "medium"])
+       (apply max-key count strings)
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     "really really long!"
+     #+end_src
+      
+     We must use [[https://clojuredocs.org/clojure.core/apply][apply]] because ~max-key~ expects elements given as arguments and
+     not a collection. The ~apply~ macro is similar to using the JS spread
+     operator, ~...~, to the final collection in the argument list.
+     #+end_details
+**** Reverse a string
+     #+begin_details
+     #+begin_summary
+     JavaScript
+     #+end_summary
+     #+begin_src js
+       function reverseString(str) {
+         return str.split("").reduce(function (a, b) {return b + a});
+       }
+       reverseString("Hello, World!")
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src js
+     "!dlroW ,olleH"
+     #+end_src
+
+     #+end_details
+     #+begin_details
+     #+begin_summary
+     Clojure
+     #+end_summary
+     #+begin_src clojure
+       (clojure.string/join (reverse "Hello, World!"))
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     "!dlroW ,olleH"
+     #+end_src
+
+     #+end_details
+**** Even Occurrences
+     Find the first item that occurs an even number of times in an array.
+     Test Array: [1, 7, 2, 4, 5, 6, 8, 9, 6, 4].
+     #+begin_details
+     #+begin_summary
+     JavaScript
+     #+end_summary
+     #+begin_src js
+       const arr = [1, 7, 2, 4, 5, 6, 8, 9, 6, 4];
+       function evenOccurrence(arr) {
+         const even = arr.reduce((a, x) => (Object.assign(a, {[x]: !(a[x] === undefined || a[x])})), {});
+         return arr.find(x => even[x]) || null;
+       }
+       evenOccurrence(arr);
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src js
+     4
+     #+end_src
+     #+end_details
+     #+begin_details
+     #+begin_summary
+     Clojure
+     #+end_summary
+     #+begin_src clojure
+       (def arr [1, 7, 2, 4, 5, 6, 8, 9, 6, 4]);
+       (defn even-occurrence [coll]
+         (let [freqs (frequencies coll)]
+           (some #(when (even? (get freqs %)) %) coll)))
+       (even-occurrence arr)
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     4
+     #+end_src
+     
+     Not that the Clojure solution correctly handles the case where we have both
+     integer and string elements that have the /same/ value, as both will be
+     distinct map keys, unlike in the JS solution where they are coerced to
+     strings.
+
+     #+end_details
+
+**** Sum Digits
+     Write a function that takes a positive integer and returns the sum of its
+     individual digits.
+     #+begin_details
+     #+begin_summary
+     JavaScript
+     #+end_summary
+     #+begin_src js
+       function sumOfDigits(num) {
+           let acc = 0;
+           do {
+               acc += num % 10;
+               num = Math.floor(num / 10);
+           } while (num > 0);
+           return acc;
+       }
+       sumOfDigits(490682);
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src js
+     29
+     #+end_src
+     #+end_details
+     #+begin_details
+     #+begin_summary
+     Clojure
+     #+end_summary
+     #+begin_src clojure
+       (defn sum-digits [int]
+         (->> int
+              (iterate #(quot % 10))
+              (take-while pos?)
+              (map #(mod % 10))
+              (reduce +)))
+       (sum-digits 490682)
+     #+end_src
+
+     #+RESULTS:
+     #+begin_src clojure
+     29
+     #+end_src
+     
+     #+end_details
+
+*** Destructuring and Function Arguments
+*** Atoms and Transients

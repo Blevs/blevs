@@ -1,0 +1,37 @@
+header {
+  background: @parchment;
+  width: 100%;
+  border-bottom: 6px solid @black;
+  border-top: 4px solid @nautical;
+  box-shadow: 4px 4px @pencil;
+  z-index: 100;
+  .navigation {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 2px;
+    font-size: 2.4rem;
+    overflow: hidden;
+    max-width: 1920px;
+    margin: 0 auto;
+    a {
+      color: @black;
+      font-weight: bold;
+      position: relative;
+      box-shadow: none;
+      border-bottom: none;
+      &:hover {
+        box-shadow: 0 -6px @reflection inset;
+        text-shadow: 1px 1px fadeout(@reflection, 80);
+      }
+      &:link {
+        text-decoration: none;
+      }
+    }
+    nav {
+      a {
+        font-weight: normal;
+      }
+    }
+  }
+}

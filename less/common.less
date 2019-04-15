@@ -1,0 +1,47 @@
+html, body {
+  height: 100%;
+}
+body {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  background: @parchment;
+  .content {
+    flex: 1 0 auto;
+  }
+}
+h1 {
+  padding-left: 10%;
+  font-size: 9.6rem;
+  position: relative;
+  color: @dark;
+  max-width: 1920px;
+  width: 100%;
+  box-sizing: border-box;
+  // margin: 0 auto;
+  text-shadow: 6px 6px @parchment,
+               8px 8px @pencil;
+  background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQImWNgYGD4z0AswK4SAFXuAf8EPy+xAAAAAElFTkSuQmCC) repeat;
+  @media (max-width: 700px) {
+    padding-left: 5%;
+    font-size: 25vw;
+  }
+
+}
+
+a {
+  position: relative;
+  transition: color 0.3s;
+  box-shadow: 0 -4px fadeout(@reflection, 20) inset;
+  border-bottom: 2px solid @reflection;
+  transition: box-shadow 0.3s, text-shadow 0.3s;
+  cursor: pointer;
+  color: inherit;
+  &:hover {
+    box-shadow: 0 -6px @reflection inset;
+    text-shadow: 1px 1px fadeout(@reflection, 80);
+  }
+  &:link {
+    text-decoration: none;
+  }
+}

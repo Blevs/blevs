@@ -1,0 +1,118 @@
+.portfolio {
+  background: @parchment;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+    // &::before {
+    //   content: "Henry Blevins";
+    //   position: absolute;
+    //   top: 6px;
+    //   left: 6px;
+    //   color: @nautical;
+    //   z-index: 0;
+    // }
+  .pieces {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .piece {
+      display: flex;
+      flex-direction: row;
+      margin: 25px 10px 25px 5px;
+      box-shadow: 8px 10px @black;
+      border: 2px solid @black;
+      background: fadeout(#fff, 95);
+      max-width: 880px;
+      @media (max-width: 500px) {
+        flex-direction: column;
+        margin-left: 12px;
+        margin-right: 20px;
+      }
+      &:nth-child(even) {
+        box-shadow: -8px 10px @black;
+        margin: 25px 5px 25px 10px;
+        flex-direction: row-reverse;
+        @media (max-width: 500px) {
+          flex-direction: column;
+          margin-left: 20px;
+          margin-right: 12px;
+        }
+        .img-container::after {
+          transform: rotate(45deg);
+        }
+      }
+      .img-container {
+        width: 30%;
+        background: grey;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        line-height: 0;
+        @media (max-width: 500px) {
+          width: 100%;
+        }
+        // &:hover:after {
+        //   content: "visit";
+        // }
+        img {
+          object-fit: cover;
+          min-height: 100%;
+          width: 100%;
+        }
+        &:hover::before {
+          opacity: 1;
+        }
+        &::before {
+          content: "visit";
+          color: fadeout(@dark, 20);
+          // text-shadow: 2px 2px @dark;
+          font-weight: bold;
+          font-size: 2.8rem;
+          background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQImWNgYGD4z0AswK4SAFXuAf8EPy+xAAAAAElFTkSuQmCC) repeat, radial-gradient(#00000000, #00000022);
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s;
+        }
+        // &::after {
+        //   text-align: center;
+        //   content: "";
+        //   font-weight: bold;
+        //   color: fadeout(@nautical, 50);
+        //   position: absolute;
+        //   width: 150%;
+        //   height: 150%;
+        //   left: -25%;
+        //   top: -25%;
+        //   border: 20px solid fadeout(@nautical, 50);
+        //   box-sizing: border-box;
+        //   transform: rotate(-45deg);
+        // }
+      }
+      .copy {
+        width: 70%;
+        padding-left: 20px;
+        font-size: 1.8rem;
+        color: @dark;
+        box-sizing: border-box;
+        @media (max-width: 500px) {
+          padding: 0 10px;
+          width: 100%;
+        }
+        h2 {
+          font-size: 2.0rem;
+          // text-shadow: 2px 2px @pencil,
+          //              4px 4px darken(@parchment, 10);
+          font-variant: small-caps;
+          color: @dark;
+          padding: 0 10px 0 5px;
+          display: inline-block;
+        }
+      }
+    }
+  }
+}
