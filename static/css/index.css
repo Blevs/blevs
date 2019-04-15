@@ -170,6 +170,9 @@ a:hover {
 a:link {
   text-decoration: none;
 }
+code {
+  background: lightgrey;
+}
 header {
   background: #fff6f1;
   width: 100%;
@@ -364,6 +367,9 @@ footer {
   overflow-x: auto;
   padding: 10px;
   box-sizing: border-box;
+}
+.post .copy .highlight code {
+  background: none;
 }
 .post .copy details summary {
   font-variant: small-caps;

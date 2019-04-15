@@ -19,7 +19,7 @@ later articles.
 Many of you may only have experience with a single programming language, and
 the idea of learning another may seem daunting. Don't worry. Learning your
 second language is much easier than the first, even though Clojure may seem
-alien at first.
+alien.
 
 In fact, many of the concepts integral to Clojure have made their way into
 JavaScript. Things like anonymous functions, map/filter/reduce and
@@ -55,13 +55,13 @@ Let's do the same thing in Clojure
 2
 ```
 
-The parenthesis go on the outside. In Clojure, instead of invoking
-functions with `f(x)`, we do `(f x)`. While initially confusing, it offers
-distinct advantages. One is that is in the form of a list. This makes our
-code data. We can edit, process and modify our code using the same tools we
-use to work with data. We won't get into that here, but it is very cool.
+The parenthesis go on the outside. In Clojure, instead of invoking functions
+with `f(x)`, we do `(f x)`. While initially confusing, it offers distinct
+advantages. One is that our code is a list. This makes it data. We can edit,
+process and modify our code using the same tools we use to work with data.
+We won't get into that here, but it is very cool.
 
-Second, more practically, is that is almost all of the syntax you need to
+Second, more practically, is that it is almost all of the syntax you need to
 know. With the exception of data literals (like vectors), and some common
 macros, that is pretty much it.
 
@@ -137,21 +137,22 @@ In Clojure
 Here is the basic syntax:
 
 ```clojure
-(defun function-name [argument1 argument2 ...]
+(defn function-name [argument1 argument2 ...]
   (body))
 ```
 
 We use a macro called `defun` and specify a function name. Note that we can,
 and prefer, to use hyphenated (or kebabed) names for our functions. We get
-to do this because `-` is a function in Clojure, not a special symbol that
-must be reserved.
+to do this because minus, `-,` is a function in Clojure, not a special symbol
+that must be reserved.
 
 Then, arguments are specified using a vector. Note the lack of commas.
 
 Finally, the function body is defined. There is no explicit `return`
-statement as the body's value is automatically returned.
+statement because the body's value is automatically returned.
 
-Before we move on we must touch on anonymous functions.
+
+### Anonymous Functions {#anonymous-functions}
 
 In JavaScript, we have two syntaxes: the function operator and the arrow function.
 
@@ -178,10 +179,10 @@ reader macro.
 The first should be familiar and reasonable. Instead of using `defn`, we
 write `fn` with no function name.
 
-The second is more cryptic. The reader macro is read by the Clojure parser
-and transformed into the first form. It is indicated by a hashed
-parenthesis `#()`. Inside, the `%` is evaluated to the first argument. We can
-use multiple arguments by adding an integer after the symbol.
+The second is more cryptic. The reader macro is transformed by the Clojure
+parser and into the first form. It is indicated by a hashed parenthesis
+`#()`. Inside, the `%` is evaluated to the first argument. We can use multiple
+arguments by adding an integer.
 
 ```clojure
 ;; The same as the add function
@@ -203,7 +204,8 @@ executed is returned.
 
 ```clojure
 (do
-  (println "Hello, World!") (println 2)
+  (println "Hello, World!")
+  (println 2)
   (+ 1 2))
 ```
 
@@ -325,15 +327,14 @@ Here is the basic syntax:
 ```
 
 It takes a vector of variable names and expressions. The expressions are
-evaluated and the variables are bound to their value within `body`. We can
-reference earlier variables within the expressions for later variables.
+evaluated and the variables are bound to their value inside of the `let`'s
+scope. We can reference earlier variables within the expressions for later
+variables, as well as in the body.
 
 Again, they are constant and we do not mutate their values.
 
 
 ## Data Structures {#data-structures}
-
-We are on to our last bits of syntax.
 
 
 ### Numbers {#numbers}
@@ -346,11 +347,13 @@ Math is straightforward, with the expected symbols defined as function.
 ```clojure
 1
 2.5
-(+ 3 4.6) ; -> 7.6
-(/ 2 4)   ; -> 1/2
-(2 / 4.0) ; -> 0.5
-(inc 2)   ; -> 3
-(dec 3)   ; -> 2
+(+ 3 4.6)  ; -> 7.6
+(/ 2 4)    ; -> 1/2
+(quot 2 4) ; 0
+(mod 2 4)  ; 2
+(2 / 4.0)  ; -> 0.5
+(inc 2)    ; -> 3
+(dec 3)    ; -> 2
 ```
 
 
@@ -381,7 +384,7 @@ java.lang.String cannot be cast to java.lang.Number
 ```
 
 Instead, functions to work with strings are found in the `clojure.string`
-namespace. A further discussion of namespaces are needed, but for now we
+namespace. A further discussion of namespaces is needed, but for now we
 access their functions and variables by stating a namespace followed by a
 slash and the name of what we want to access.
 
@@ -390,8 +393,7 @@ slash and the name of what we want to access.
  (clojure.string/trim "     trim me    ")
  (clojure.string/lower-case "ABC")
  (clojure.string/reverse "olleh")
- (clojure.string/join ", " ["a" "b" "c"])
- )
+ (clojure.string/join ", " ["a" "b" "c"]))
 ```
 
 ```clojure
@@ -417,16 +419,17 @@ great and you will see why later.
 
 ### Vectors {#vectors}
 
-We have already seen vectors in a few places, like defining function
-arguments. Like arrays in JavaScript, they are enclosed by square
-brackets. They do not need commas by default, but they can be used.
+We have already seen vectors in a few places, such as defining function
+arguments. Like arrays in JavaScript, they are enclosed by square brackets.
+They do not need commas by default, but they can be used.
 
 ```clojure
 [1 2 3]
 ["a", 4, (fn [x] (+ x 2))]
+(vector 5 6 7)
 ```
 
-There are a host of functions for working with them.
+There are a host of functions for working with them. Here is a sample:
 
 ```clojure
 ;; index access
@@ -463,53 +466,20 @@ Note that all of these operations are **immutable**. For example:
 
 Modifying a vector, or any of our basic data structures, creates a new
 copy and does not change the old value or any variables associated with
-it. Your first thought might be that sounds slow, wasteful or
+it. Your first thought might be that it sounds slow, wasteful or
 inconvenient.
 
 Immutable data structures are fast and wonderful. They are fast because
 they are implemented using persistent data structures, which is to say
-instead of creating an entirely new vector every time we add an element on
-the end of swap one out, Clojure creates a vector that references the
-original and only stores the newly created or modified elements.
+instead of creating an entirely new vector with every operation , Clojure
+creates a vector that overlaps with the original and only stores the newly
+created or modified elements.
 
 While that does introduce some overhead it makes data incredibly
 convenient to reason about. We never have to worry about a function
-changing data it doesn't explicitly return. If you have worked with modern
-JavaScript frameworks, you may realize how annoying unexpected mutation
-can be and annoyed by how frequently you visit <https://doesitmutate.xyz>.
-
-```js
-// numbers
-1
-2.3
-// strings
-"Hello, World!"
-// vectors
-[1, 2, 3]
-// objects
-{ a: 1, b: 2 }
-```
-
-In Clojure, we have all of these and more.
-
-```clojure
-;; numbers (comments use ; instead of //)
-1
-2.3
-;; strings
-"Hello, World!"
-;; keywords
-:not-a-string
-;; vectors
-[1 2 3]
-;; lists
-'(1 2 3)
-;; maps (objects but, only data)
-{:a 1 :b 2}
-{"a" 1, 3 :b}
-;; sets (only one of each element)
-#{1 2 3}
-```
+changing data. We get what is returned. Nothing more, nothing less. If you
+have worked with modern JavaScript frameworks, you may realize how annoying
+unexpected mutation can be and how frequently you visit [doesitmutate.xyz](https://doesitmutate.xyz).
 
 
 ### Lists {#lists}
@@ -522,6 +492,16 @@ indicating it is a literal value.
 (list 1 2 3) ; '(1 2 3)
 ```
 
+In fact, it is our code
+
+```clojure
+(eval '(inc 1))
+```
+
+```clojure
+2
+```
+
 They are similar to vectors, but each element is internally linked to the
 next. We have to traverse the list to access elements, but it is very fast
 to add items to the front. They are also _lazy_, which we will explain
@@ -530,7 +510,7 @@ later.
 ```clojure
 ;; index access (works, but is slow)
 (nth '(1 2 3) 2)   ; 3
-;; get doesn't work, because it is technically key lookup
+;; get doesn't work, because it is technically a key lookup
 (get '(1 2 3) 0)   ; nil
 ;; conventiently get the first few elements
 (first '(1 2 3))   ; 1
@@ -543,8 +523,6 @@ later.
 (pop '(1 2 3))     ; '(2 3)
 ;; get last element
 (last '(1 2 3))    ; 3
-;; create a list
-(list 1 2 3)       ; '(1 2 3)
 ```
 
 If you are paying close attention you may have noticed something strange.
@@ -623,7 +601,7 @@ as maps and vectors are implemented very similarly.
 Clojure has more built in data structures, like sets, sorted-sets,
 sorted-maps and a few more.
 
-Clojure also has a very large standard library full of incredibly useful,
+Clojure also has a very **large standard library** full of incredibly useful,
 specific and well named functions for working with and creating data. You
 can find them all on [ClojureDocs](https://clojuredocs.org/core-library). We will use some of them in the
 concluding example problems.
@@ -880,7 +858,7 @@ can put them anywhere).
 (->> [1 2 3 4]
      (map #(* % 2) ,,,) ;; [3 6 9 12]
      (filter even? ,,,) ;; [6 12]
-     (reduce +) ,,,)    ;; 18
+     (reduce + ,,,))    ;; 18
 ```
 
 We map over `[1 2 3 4]`, we `filter` over that result, and then `reduce` it.
@@ -924,14 +902,14 @@ We haven't talked about for or while loops yet. In most Lisps, we avoid
 these by instead using recursion. Lisps tend to have a feature called
 tail-call optimization that allows us to recur without allocating memory
 for each function call added to the stack. Because Clojure is built on top
-of Java it does not have this feature, and likely never well.
+of Java it does not have this feature, and likely never will.
 
 Instead, it has a `loop` macro that enables us to perform a sort of
 recursion. It takes a vector of variables and expressions, and binds the
 variables to the values of those expressions, just like `let`.
 
 Then, in its body, it either evaluates to a value, or calls `recur`. `recur`
-executes the loop body again, but binds the arguments to the variables.
+executes the loop body again, but binds the variables to the arguments.
 
 ```clojure
 (loop [variable1 expression1
@@ -951,10 +929,10 @@ executes the loop body again, but binds the arguments to the variables.
 Let's implement summing a list using traditional recursion.
 
 ```clojure
-(defn sum-recursively [acc xs]
-  (if (empty? xs)
+(defn sum-recursively [acc nums]
+  (if (empty? nums)
     acc
-    (sum-recursively (+ acc (first xs)) (rest xs))))
+    (sum-recursively (+ acc (first nums)) (rest nums))))
 
 (defn sum [coll]
   (sum-recursively 0 coll))
@@ -975,7 +953,6 @@ collection we will get a stack overflow.
 
 ```clojure
 class java.lang.StackOverflowErrorclass java.lang.StackOverflowErrorExecution error (StackOverflowError) at user/eval5761$sum-recursively (REPL:5).
-null
 ```
 
 However, with some minor modifications we can safely use `loop`.
@@ -983,10 +960,10 @@ However, with some minor modifications we can safely use `loop`.
 ```clojure
 (defn sum [coll]
   (loop [acc 0
-         xs coll]
-    (if (empty? xs)
+         nums coll]
+    (if (empty? nums)
       acc
-      (recur (+ acc (first xs)) (rest xs)))))
+      (recur (+ acc (first nums)) (rest nums)))))
 
 (sum [1 2 3 4 5])
 ```
@@ -1047,8 +1024,8 @@ Clojure
 "really really long!"
 ```
 
-Advanced Solution: Clojure has [max-key](https://clojuredocs.org/clojure.core/max-key), which applies a function its
-arguments and returns the value that gives the maximum result.
+Advanced Solution: Clojure has [max-key](https://clojuredocs.org/clojure.core/max-key), which applies a function to its
+other arguments and returns the value that gives the maximum result.
 
 ```clojure
 (def strings ["short" "really really long!" "medium"])
