@@ -1,0 +1,35 @@
+.list {
+  .posts {
+    max-width: 500px;
+    margin: 0 auto;
+    li {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      margin: 25px 10px 25px 5px;
+      box-shadow: 8px 10px @black;
+      border: 2px solid @black;
+      background: fadeout(#fff, 95);
+      max-width: 880px;
+      @media (max-width: 500px) {
+        flex-direction: column;
+        margin-left: 12px;
+        margin-right: 20px;
+      }
+    }
+    h2 {
+      font-size: 2.0rem;
+      font-variant: small-caps;
+      color: @dark;
+      padding: 0 10px 0 5px;
+      margin-top: 20px;
+      a {
+        box-shadow: none;
+        border-bottom: none;
+      }
+    }
+    div {
+      padding: 10px;
+    }
+  }
+}
