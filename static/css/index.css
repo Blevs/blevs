@@ -214,6 +214,16 @@ footer {
   flex-shrink: 0;
   background: #fff6f1;
   margin-top: 15px;
+  font-size: 1.1rem;
+}
+footer section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 10px;
+  box-sizing: border-box;
 }
 .portfolio {
   background: #fff6f1;
