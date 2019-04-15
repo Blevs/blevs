@@ -261,16 +261,16 @@ footer {
   overflow: hidden;
   cursor: pointer;
   line-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+  border-bottom: none;
 }
 @media (max-width: 500px) {
   .portfolio .pieces .piece .img-container {
     width: 100%;
   }
-}
-.portfolio .pieces .piece .img-container img {
-  object-fit: cover;
-  min-height: 100%;
-  width: 100%;
 }
 .portfolio .pieces .piece .img-container:hover::before {
   opacity: 1;
@@ -282,6 +282,7 @@ footer {
   font-size: 2.8rem;
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQImWNgYGD4z0AswK4SAFXuAf8EPy+xAAAAAElFTkSuQmCC) repeat, radial-gradient(#00000000, #00000022);
   position: absolute;
+  z-index: 1;
   width: 100%;
   height: 100%;
   display: flex;
