@@ -1374,3 +1374,90 @@
     default value is not given.
     
 *** Atoms and Transients
+    While all of our standard data structures and variables are immutable, there
+    are two common cases where we want and can use mutation.
+
+    The first is the ~atom~. Atoms hold one of our existing data structures. We
+    can dereference it with the ~deref~ function or the ~@~ operator to get the
+    value it is holding. ~swap!~ updates the value by applying a function, and
+    ~reset!~ sets it to the given value.
+
+    #+begin_src clojure
+            (let [counter (atom 1)]
+              (println (deref counter))
+              (swap! counter inc)
+              (println @counter)
+              (reset! counter 10)
+              @counter)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    1
+    2
+    10
+    #+end_src
+    
+    All of the functions that perform mutations are explicitly marked with an ~!~
+    at the end. All operations on atoms are synchronous. We will see them used
+    when we get to the frontend and start building components.
+    
+    We also have transients. Under the hood, Clojure will create mutable data
+    structures to perform efficient operations before returning the immutable
+    data structure for our use. Transients let us turn our immutable data
+    structures into mutable versions. That is not to say they work like mutable
+    arrays in JavaScript.
+    
+    We call ~transient~ on a data structure to create a mutable copy. It can only
+    be modified using special mutable versions of our traditional operators,
+    like ~conj!~, ~accoc!~ and so on. Using a normal ~conj~ or other persistent
+    function will throw an error, making it impossible to accidentally mix in
+    transient structures. We call ~persistent!~ to make our structure immutable.
+    
+    Transients are distinct from atoms in that they are *not* meant to be modified
+    and used independently.
+    
+    They are correctly used exactly the same as persistent structures. They main
+    exceptions being old references to them will be mutated and they are not
+    safe to use in multiple threads (something we get for free with persistent data).
+    
+    #+begin_src clojure
+      (def coll (transient [1 2 3 4]))
+      (-> coll
+          (conj! 5)
+          (assoc! 0 0)
+          persistent!)
+      #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    [0 2 3 4 5]
+    #+end_src
+    
+    Let's see what happens when we try to continue modifying ~coll~
+    #+begin_src clojure
+      (assoc! coll 0 1)
+    #+end_src
+
+    #+RESULTS:
+    #+begin_src clojure
+    class java.lang.IllegalAccessErrorclass java.lang.IllegalAccessErrorExecution error (IllegalAccessError) at user/eval7628 (REPL:2).
+    Transient used after persistent! call
+    #+end_src
+    
+    That's a helpful error message. ~persistent!~ has an exclamation point, so it
+    is telling us that it mutates the data is given. When we apply it we don't
+    just return a persistent data structure, we mutate our transient into one
+    and cannot continue using old references.
+
+*** Developing using ~lein~
+**** Installing Clojure and ~lein~
+     Link to instructions
+**** Initializing a project
+     lein new name
+     Project structure
+**** project.clj and deps
+     Adding dep vectors
+     installing
+**** namespaces and requiring
+*** Other resources
