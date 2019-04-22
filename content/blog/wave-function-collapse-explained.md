@@ -1454,3 +1454,5 @@ therefore we do not allow it to appear in the output image.
 
 We see that there is no place where a yellow pixel borders a green one,
 either cardinally or diagonally.
+
+This post is in progress. Check back later for the rest of the algorithm.
