@@ -786,14 +786,13 @@ change our selection to the other value.
 <div class="sudoku">
   <div class="block">
     <div class="cell">
-      <div class="candidate">1</div>
       <div class="candidate">2</div>
       <div class="candidate">5</div>
     </div>
     <div class="cell">6</div>
     <div class="cell">
       <div class="new">
-        <div class="cell">3</div>
+        <div class="cell">1</div>
       </div>
     </div>
     <div class="cell">8</div>
@@ -803,13 +802,11 @@ change our selection to the other value.
       <div class="candidate">3</div>
     </div>
     <div class="cell">
-      <div class="candidate">1</div>
       <div class="candidate">2</div>
       <div class="candidate">5</div>
     </div>
     <div class="cell">7</div>
     <div class="cell">
-      <div class="candidate">1</div>
       <div class="candidate">4</div>
       <div class="candidate">3</div>
     </div>
@@ -818,7 +815,6 @@ change our selection to the other value.
     <div class="cell">8</div>
     <div class="cell">4</div>
     <div class="cell">
-      <div class="candidate">1</div>
       <div class="candidate">3</div>
       <div class="candidate">5</div>
     </div>
