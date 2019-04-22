@@ -4,7 +4,8 @@
   :export_hugo_section: blog
   :header-args: :exports both :results code :eval never-export
   :END:
-** Clojure Crash Course for JavaScript Developers :wfc:
+** DONE Clojure Crash Course for JavaScript Developers :wfc:
+   CLOSED: [2019-04-15 Mon 02:03]
    :PROPERTIES:
    :export_file_name: clojure-crash-course
    :header-args:js: :session *Javascript REPL*
@@ -30,7 +31,6 @@
                                  org-babel-clojure-sync-nrepl-timeout))
                             (nrepl-sync-request:eval expanded
                                                      (cider-current-connection))))
-                    (message (format "%S" response))
                     (setq result
                           (concat
                            (nrepl-dict-get response
@@ -81,15 +81,19 @@
                   ;; Put the output or the value in the result section of
                   ;; the code block.
                   (setq result
-                        (concat
-                         (nrepl-dict-get response
-                                         (if (or (member "output" result-params)
-                                                 (member "pp" result-params))
-                                             "out"
-                                           "value"))
-                         (nrepl-dict-get response "ex")
-                         (nrepl-dict-get response "root-ex")
-                         (nrepl-dict-get response "err")))))))
+                        (progn
+                          (message response)
+                          (message (nrepl-dict-get response "output"))
+                          (concat
+                           (nrepl-dict-get response
+                                           (if (or (member "output" result-params)
+                                                   (member "pp" result-params))
+                                               "out"
+                                             "out" ;; "value"
+                                             ))
+                           (nrepl-dict-get response "ex")
+                           (nrepl-dict-get response "root-ex")
+                           (nrepl-dict-get response "err"))))))))
            (slime
             (require 'slime)
             (with-temp-buffer
@@ -103,6 +107,39 @@
            result
            (condition-case nil (org-babel-script-escape result)
              (error result)))))
+
+     (defun org-babel-expand-body:clojure (body params)
+       "Expand BODY according to PARAMS, return the expanded body."
+       (let* ((vars (org-babel--get-vars params))
+              (ns (or (cdr (assq :ns params))
+                      (org-babel-clojure-cider-current-ns)))
+              (result-params (cdr (assq :result-params params)))
+              (print-level nil)
+              (print-length nil)
+              (body
+               (org-trim
+                (format "(ns %s)\n%s"
+                        ;; Source block specified namespace :ns.
+                        ns
+                        ;; Variables binding.
+                        (if (null vars) (org-trim body)
+                          (format "(let [%s]\n%s)"
+                                  (mapconcat
+                                   (lambda (var)
+                                     (format "%S (quote %S)" (car var) (cdr var)))
+                                   vars
+                                   "\n      ")
+                                  body))))))
+         (if (or (member "code" result-params)
+                 (member "pp" result-params)
+                 (member "html" result-params))
+             (format "(clojure.pprint/pprint (do %s))" body)
+           body)))
+   #+end_src
+
+   #+RESULTS:
+   #+begin_src elisp
+   org-babel-expand-body:clojure
    #+end_src
    
    #+begin_description
@@ -1427,7 +1464,7 @@
           (conj! 5)
           (assoc! 0 0)
           persistent!)
-      #+end_src
+    #+end_src
 
     #+RESULTS:
     #+begin_src clojure
@@ -1461,3 +1498,417 @@
      installing
 **** namespaces and requiring
 *** Other resources
+** DONE Wave Function Collapse Explained :wfc:
+   CLOSED: [2019-04-22 Mon 04:08]
+   :PROPERTIES:
+   :export_file_name: wave-function-collapse-explained
+   :END:
+   #+begin_src elisp :exports none :results silent
+    (defun nrepl-send-sync-request (request connection &optional abort-on-input tooling)
+      "Send REQUEST to the nREPL server synchronously using CONNECTION.
+    Hold till final \"done\" message has arrived and join all response messages
+    of the same \"op\" that came along.
+    If ABORT-ON-INPUT is non-nil, the function will return nil at the first
+    sign of user input, so as not to hang the interface.
+    If TOOLING, use the tooling session rather than the standard session."
+      (let* ((time0 (current-time))
+             (response (cons 'dict nil))
+             (nrepl-ongoing-sync-request t)
+             status)
+        (nrepl-send-request request
+                            ;; do not accumulate values by ignoring those that are nil or ""
+                            (lambda (resp)
+                              (unless (and (nrepl-dict-get resp "value")
+                                           (not (eq "" (nrepl-dict-get resp "value"))))
+                                (nrepl-dict-put resp "value"
+                                                (nrepl-dict-get response "value")))
+                              (nrepl--merge (nrepl-dict-put response "value" "")
+                                            resp))
+                            connection
+                            tooling)
+        (while (and (not (member "done" status))
+                    (not (and abort-on-input
+                              (input-pending-p))))
+          (setq status (nrepl-dict-get response "status"))
+          ;; If we get a need-input message then the repl probably isn't going
+          ;; anywhere, and we'll just timeout. So we forward it to the user.
+          (if (member "need-input" status)
+              (progn (cider-need-input (current-buffer))
+                     ;; If the used took a few seconds to respond, we might
+                     ;; unnecessarily timeout, so let's reset the timer.
+                     (setq time0 (current-time)))
+            ;; break out in case we don't receive a response for a while
+            (when (and nrepl-sync-request-timeout
+                       (> (cadr (time-subtract (current-time) time0))
+                          nrepl-sync-request-timeout))
+              (error "Sync nREPL request timed out %s" request)))
+          ;; Clean up the response, otherwise we might repeatedly ask for input.
+          (nrepl-dict-put response "status" (remove "need-input" status))
+          (accept-process-output nil 0.01))
+        ;; If we couldn't finish, return nil.
+        (when (member "done" status)
+          (nrepl-dbind-response response (ex err eval-error pp-stacktrace id)
+            (when (and ex err)
+              (cond (eval-error (funcall nrepl-err-handler))
+                    (pp-stacktrace (cider--render-stacktrace-causes
+                                    pp-stacktrace (remove "done" status))))) ;; send the error type
+            (when id
+              (with-current-buffer connection
+                (nrepl--mark-id-completed id)))
+            response))))
+   #+end_src
+
+   #+begin_description
+   A clear, visual explanation of the Wave Function Collapse. Generate
+   beautifully emergent images from tiny inputs while learning about a unique
+   and fun algorithm.
+   #+end_description
+
+   If you are not familiar, [[https://github.com/mxgmn/WaveFunctionCollapse][Wave Function Collapse]] (WFC) is an algorithm that
+   generates images that are locally similar to input images.
+
+   In general, the algorithm that randomly generates an input that follows rules
+   regarding the adjacency of each element.
+
+*** Bird's Eye View
+    Here is the basic operation of the algorithm:
+
+    1. Generate a set of tiles from an input image.
+    2. Determine which tiles may overlap with each other, generating a set of
+       rules for tiles that can be neighbors.
+    3. Generate an output image where every pixel can be every tile (a /superposition/).
+       a. Choose a pixel with the smallest number of possible tiles, and
+       /collapse/ it to a single tile.
+       b. Propagate the collapse by checking the pixel's neighbors for tiles
+       that are no longer allowed to be there based on our overlapping rules.
+       Repeat until there are no more changes.
+       c. Goto a
+    4. When every pixel is a single value we have finished generating our output
+       image. Sometimes, we will reach a contradiction. In this case, we restart
+       at 3.
+       
+    Based on the rules we generated every pixel and its neighbors will be in a
+    configuration found in our initial input. This is what we mean when we say
+    that our output image is /locally similar/ to our input.
+
+    #+begin_src clojure :results none
+      (use 'hiccup.core)
+      (defn pphtml [content]
+        (let [in (javax.xml.transform.stream.StreamSource.
+                  (java.io.StringReader. (html content)))
+              writer (java.io.StringWriter.)
+              out (javax.xml.transform.stream.StreamResult. writer)
+              transformer (.newTransformer 
+                           (javax.xml.transform.TransformerFactory/newInstance))]
+          (.setOutputProperty transformer 
+                              javax.xml.transform.OutputKeys/INDENT "yes")
+          (.setOutputProperty transformer 
+                              "{http://xml.apache.org/xslt}indent-amount" "2")
+          (.setOutputProperty transformer 
+                              javax.xml.transform.OutputKeys/METHOD "xml")
+          (.setOutputProperty transformer
+                              javax.xml.transform.OutputKeys/OMIT_XML_DECLARATION, "yes")
+          (.transform transformer in out)
+          (-> out .getWriter .toString print)))
+    #+end_src
+
+    #+begin_src clojure :results output html
+      (pphtml [:div [:span "test"]])
+    #+end_src
+
+    #+RESULTS:
+    #+begin_export html
+    <div>
+      <span>test</span>
+    </div>
+    #+end_export
+
+# *** In English, Egon
+
+*** An Example
+    Let's perform the algorithm to get a better feel of how it work. We are
+    going start with a an image.
+
+    #+begin_export html
+    <div class="scale-sharp">
+    #+end_export
+    [[file:static/img/maze.png]]
+    #+begin_export html
+    </div>
+    #+end_export
+
+**** Making the Rules
+
+     Let's begin by splitting our image into pixels. This article's scope is only
+     to explain how the algorithm works, but you can check the source of this
+     article to see the code used to generate all of the following images.
+     However, it will be improved and properly explained in the next article out
+     our implementation.
+
+     #+begin_src clojure :results output html :exports results
+       (def path "static/img/maze.png")
+
+       (defn image->2d [image]
+         (let [img (javax.imageio.ImageIO/read (clojure.java.io/file image))]
+           (->> img
+                (#(.getRGB % 0 0 (.getWidth %) (.getHeight %) (int-array (* (.getWidth %) (.getHeight %))) 0 (.getHeight %)))
+                (partition (.getWidth img))
+                (mapv vec))))
+
+       (defn int->rgba [int]
+         [(bit-shift-right (bit-and int 0x00FF0000) 16)   ;; r
+          (bit-shift-right (bit-and int 0x0000FF00) 8)    ;; g
+          (bit-and int 0x000000FF)                        ;; b
+          (bit-shift-right (bit-and int 0xFF000000) 24)]) ;; a
+
+       (defn rgba->int [[r g b a]]
+         (-> (bit-shift-left (bit-and a 0xFF) 24)
+             (bit-or (bit-shift-left (bit-and r 0xFF) 16))
+             (bit-or (bit-shift-left (bit-and g 0xFF) 8))  
+             (bit-or (bit-and b 0xFF))))
+
+       (defn rgba->hex [[r g b a]]
+         (format "#%02x%02x%02x%02x" r g b a))
+
+       (def sample (image->2d path))
+
+       (defn pixel [int-rgba]
+         [:span.pixel {:style (str "background-color:" (-> int-rgba int->rgba rgba->hex))} " "])
+
+       (defn pixel-tile [n tile]
+         [:div.pixel-tile {:style (str "--n: " n)} (map #(map pixel %) tile)])
+
+       (pphtml (pixel-tile 4 sample))
+     #+end_src
+
+     #+RESULTS:
+     #+begin_export html
+     <div class="pixel-tile" style="--n: 4">
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#697e6dff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#dfba61ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+       <span class="pixel" style="background-color:#272822ff"> </span>
+     </div>
+     #+end_export
+
+     With our sample image, the next step is divide it into tiles, in this case
+     2 pixel by 2 pixel regions. 
+
+     In this case, we have chosen to have our tiling wrap. When our tile
+     selector hits an edge, it will get the pixels on the opposite side. This is
+     one of the ways we increase the number of tiles in an input image to
+     improve our output. Other methods include rotating and reflecting each tile
+     to get even more.
+     
+     #+begin_src clojure :results output html :exports results
+       (defn subtile [tile x y width height & {:keys [wrap?]}]
+         (let [tile   (if wrap? (cycle (map cycle tile)) tile)
+               width  (if (and (not wrap?) (neg? x)) (+ width x)  width)
+               height (if (and (not wrap?) (neg? y)) (+ height y) height)
+               x      (if wrap? (Math/abs x) (max x 0))
+               y      (if wrap? (Math/abs y) (max y 0))]
+          (->> tile
+               (drop y)
+               (take height)
+               (map #(drop x %))
+               (mapv #(vec (take width %))))))
+
+       (defn transpose [tile]
+         (apply mapv vector tile))
+
+       (defn reflect-y [tile]
+         (mapv (comp vec rseq) tile))
+
+       (defn reflect-x [tile]
+         (vec (rseq tile)))
+
+       (defn permutations [tile]
+         ((juxt identity reflect-x reflect-y (comp reflect-x reflect-y) transpose) tile))
+
+
+       (defn sample->tiles [sample tile-size & {:keys [permutations?]}]
+         (let [tiles (for [y (range (count sample))
+                           x (range (count (first sample)))]
+                       (subtile sample x y tile-size tile-size :wrap? true))]
+           (if-not permutations?
+             tiles
+             (reduce concat (map permutations tiles)))))
+
+       (def tiles (sample->tiles sample 2))
+
+       (pphtml [:div.pixel-tiles (map #(pixel-tile 2 %) tiles)])
+     #+end_src
+
+     #+RESULTS:
+     #+begin_export html
+     <div class="pixel-tiles">
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#697e6dff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#697e6dff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#697e6dff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#697e6dff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+       <div class="pixel-tile" style="--n: 2">
+         <span class="pixel" style="background-color:#272822ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+         <span class="pixel" style="background-color:#dfba61ff"> </span>
+       </div>
+     </div>
+     #+end_export
+     
+     Quite a few of the tiles above are repeated and WFC makes use of that
+     information. Tiles that more frequently appear in the sample more frequently
+     appear in the output. When /collapsing/ a pixel to a single tile out of all
+     the possible tiles, the probability for each one to be selected is weighted
+     by its frequency in the sample image. 
+     
+     Above, it is obvious that the neighboring tiles are able to overlap. We
+     want to know, for every tile, which tiles it can overlap with in all
+     directions. Let's take a look at the first tile.
+     
+     #+begin_src clojure :results output html :exports none
+       (defn offsets [tile-size]
+         (let [limit (dec tile-size)]
+           (for [x (range (- limit) (inc limit))
+                 y (range (- limit) (inc limit))
+                 :when (not (and (zero? x) (zero? y)))]
+             [x y])))
+
+       (defn overlap? [tile1 tile2 offset]
+         (let [[x y] offset
+               tile-size (count tile1)]
+           (= (subtile tile1 x y tile-size tile-size)
+              (subtile tile2 (- x) (- y) tile-size tile-size))))
+
+       (defn pairings [coll]
+         (reduce concat (for [[indexa a] (map-indexed vector coll)]
+                          (for [b (drop indexa coll)]
+                            [a b]))))
+
+       ;; :tiles -> :overlaps
+       (defn calculate-overlaps [tiles]
+         (let [num-tiles (count tiles)
+               offs (offsets (count (first tiles)))]
+           (reduce (fn [overlaps [index1 index2]]
+                     (reduce (fn [overlaps offset]
+                               (-> overlaps ;; add to both tiles' overlaps map
+                                   (update-in [index1 offset] (fnil conj #{}) index2)
+                                   (update-in [index2 (mapv - offset)] (fnil conj #{}) index1)))
+                             overlaps
+                             (filter #(overlap? (get tiles index1) (get tiles index2) %) offs)))
+                   ;; vector to hold maps of overlaps at each offset
+                   (vec (repeat num-tiles {})) 
+                   ;; unique tile index pairings
+                   (pairings (range num-tiles))))) 
+
+       (defn preprocess [sample-path tile-size & {:keys [permutations?]}]
+         (->> (sample->tiles sample-path tile-size :permutations? true)
+              frequencies
+              transpose
+              (map vector [:tiles :freqs])
+              (into {})))
+
+
+
+       (println (first ((calculate-overlaps tiles))))
+     #+end_src
+     
+     This post is in progress. Check back later for the rest of the algorithm.
+

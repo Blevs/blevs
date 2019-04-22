@@ -4,6 +4,7 @@ description = """
   A quick trip through the world of Clojure while we prepare to implement the
   Wave Function Collapse algorithm and build a frontend with ClojureScript.
   """
+date = 2019-04-15T02:03:00-04:00
 tags = ["wfc"]
 draft = false
 +++
