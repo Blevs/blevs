@@ -25,11 +25,14 @@ Here is the basic operation of the algorithm:
 2.  Determine which tiles may overlap with each other, generating a set of
     rules for tiles that can be neighbors.
 3.  Generate an output image where every pixel can be every tile (a _superposition_).
+
     a. Choose a pixel with the smallest number of possible tiles, and
     _collapse_ it to a single tile.
+
     b. Propagate the collapse by checking the pixel's neighbors for tiles
     that are no longer allowed to be there based on our overlapping rules.
     Repeat until there are no more changes.
+
     c. Goto a
 4.  When every pixel is a single value we have finished generating our output
     image. Sometimes, we will reach a contradiction. In this case, we restart
@@ -38,35 +41,6 @@ Here is the basic operation of the algorithm:
 Based on the rules we generated every pixel and its neighbors will be in a
 configuration found in our initial input. This is what we mean when we say
 that our output image is _locally similar_ to our input.
-
-```clojure
-(use 'hiccup.core)
-(defn pphtml [content]
-  (let [in (javax.xml.transform.stream.StreamSource.
-            (java.io.StringReader. (html content)))
-        writer (java.io.StringWriter.)
-        out (javax.xml.transform.stream.StreamResult. writer)
-        transformer (.newTransformer
-                     (javax.xml.transform.TransformerFactory/newInstance))]
-    (.setOutputProperty transformer
-                        javax.xml.transform.OutputKeys/INDENT "yes")
-    (.setOutputProperty transformer
-                        "{http://xml.apache.org/xslt}indent-amount" "2")
-    (.setOutputProperty transformer
-                        javax.xml.transform.OutputKeys/METHOD "xml")
-    (.setOutputProperty transformer
-                        javax.xml.transform.OutputKeys/OMIT_XML_DECLARATION, "yes")
-    (.transform transformer in out)
-    (-> out .getWriter .toString print)))
-```
-
-```clojure
-(pphtml [:div [:span "test"]])
-```
-
-<div>
-  <span>test</span>
-</div>
 
 
 ## An Example {#an-example}

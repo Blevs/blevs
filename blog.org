@@ -1577,11 +1577,14 @@
     2. Determine which tiles may overlap with each other, generating a set of
        rules for tiles that can be neighbors.
     3. Generate an output image where every pixel can be every tile (a /superposition/).
+
        a. Choose a pixel with the smallest number of possible tiles, and
        /collapse/ it to a single tile.
+
        b. Propagate the collapse by checking the pixel's neighbors for tiles
        that are no longer allowed to be there based on our overlapping rules.
        Repeat until there are no more changes.
+
        c. Goto a
     4. When every pixel is a single value we have finished generating our output
        image. Sometimes, we will reach a contradiction. In this case, we restart
@@ -1591,7 +1594,7 @@
     configuration found in our initial input. This is what we mean when we say
     that our output image is /locally similar/ to our input.
 
-    #+begin_src clojure :results none
+    #+begin_src clojure :results none :exports none
       (use 'hiccup.core)
       (defn pphtml [content]
         (let [in (javax.xml.transform.stream.StreamSource.
@@ -1611,17 +1614,6 @@
           (.transform transformer in out)
           (-> out .getWriter .toString print)))
     #+end_src
-
-    #+begin_src clojure :results output html
-      (pphtml [:div [:span "test"]])
-    #+end_src
-
-    #+RESULTS:
-    #+begin_export html
-    <div>
-      <span>test</span>
-    </div>
-    #+end_export
 
 # *** In English, Egon
 
