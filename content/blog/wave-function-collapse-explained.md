@@ -55,26 +55,943 @@ Let's try to, hypothetically, solve one and follow along with our algorithm.
 We start with a grid where some numbers are already filled in, so we are
 partially through 3.
 
+<div class="sudoku">
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">8</div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">8</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+      <div class="candidate">6</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">9</div>
+    <div class="cell">1</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">4</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">3</div>
+    <div class="cell">1</div>
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">8</div>
+    <div class="cell">6</div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+  </div>
+  <div class="block">
+    <div class="cell">7</div>
+    <div class="cell">5</div>
+    <div class="cell">4</div>
+    <div class="cell">3</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">4</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">5</div>
+    <div class="cell">8</div>
+  </div>
+  <div class="block">
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">8</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">6</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+</div>
+
 The first thing we do with a Sudoku is try to find a location where there is
 only one possible number. This is 3a, in the case of a single possibility.
+
+<div class="sudoku">
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">
+      <div class="new">
+        <div class="cell">6</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">8</div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">8</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+      <div class="candidate">6</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">9</div>
+    <div class="cell">1</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">4</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">3</div>
+    <div class="cell">1</div>
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">8</div>
+    <div class="cell">6</div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+  </div>
+  <div class="block">
+    <div class="cell">7</div>
+    <div class="cell">5</div>
+    <div class="cell">4</div>
+    <div class="cell">3</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">4</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">5</div>
+    <div class="cell">8</div>
+  </div>
+  <div class="block">
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">8</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">6</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+</div>
 
 Once we have filled it in, we check the rest of locations to see how the
 changes effects the numbers allowed in them. This is 3b, propagation.
 
 We restart. Hopefully, we found a another place with only one possibility.
 If this is a hard Sudoku that may not be the case. Our best bet may be a
-location where there are two possibilities. We proceed by selecting one at
-random. This is 3a and what we mean by _collapsing_ to a single value.
+location where there are two possibilities.
+
+Without knowing any additional Sudoku strategy, we proceed by selecting one
+at random. This is 3a and what we mean by _collapsing_ to a single value.
+
+<div class="sudoku">
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">6</div>
+    <div class="cell">
+      <div class="new">
+        <div class="cell">3</div>
+      </div>
+    </div>
+    <div class="cell">8</div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">8</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+      <div class="candidate">6</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">9</div>
+    <div class="cell">1</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">4</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">3</div>
+    <div class="cell">1</div>
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">8</div>
+    <div class="cell">6</div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+  </div>
+  <div class="block">
+    <div class="cell">7</div>
+    <div class="cell">5</div>
+    <div class="cell">4</div>
+    <div class="cell">3</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">4</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">5</div>
+    <div class="cell">8</div>
+  </div>
+  <div class="block">
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">8</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">6</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+</div>
 
 In Sudoku, we would continue the puzzle until we finish the puzzle or hit a
-contradiction. At that point, we would know that we chose the wrong value.
-We would _backtrack_ by erasing anything we had filled in up to that point,
-and change our selection to the other value.
+contradiction.
 
-In Wave Function Collapse, our constraints are much less severe that Sudoku,
-so we don't hit contradictions very often and instead of backtracking we
+<div class="sudoku">
+  <div class="block">
+    <div class="cell">5</div>
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+    <div class="cell">8</div>
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">1</div>
+  </div>
+  <div class="block">
+    <div class="cell">8</div>
+    <div class="cell">4</div>
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">6</div>
+    <div class="cell">9</div>
+    <div class="cell">3</div>
+    <div class="cell">5</div>
+  </div>
+  <div class="block">
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">9</div>
+    <div class="cell">1</div>
+    <div class="cell">5</div>
+    <div class="cell">3</div>
+    <div class="cell">8</div>
+    <div class="cell">6</div>
+    <div class="cell">4</div>
+  </div>
+  <div class="block">
+    <div class="cell">3</div>
+    <div class="cell">1</div>
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">8</div>
+    <div class="cell">6</div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+  </div>
+  <div class="block">
+    <div class="cell">7</div>
+    <div class="cell">5</div>
+    <div class="cell">4</div>
+    <div class="cell">3</div>
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">9</div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+    <div class="cell">9</div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">1</div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+    <div class="cell">7</div>
+    <div class="cell">1</div>
+    <div class="cell">4</div>
+    <div class="cell">2</div>
+    <div class="cell">9</div>
+    <div class="cell">5</div>
+    <div class="cell">8</div>
+  </div>
+  <div class="block">
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">8</div>
+    <div class="cell">5</div>
+    <div class="cell">9</div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+  </div>
+  <div class="block">
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">5</div>
+    <div class="cell">3</div>
+    <div class="cell">
+      <div class="error">0</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">1</div>
+  </div>
+</div>
+
+At that point, we would know that we chose the wrong value. We would
+_backtrack_ by erasing anything we had filled in up to that point, and
+change our selection to the other value.
+
+<div class="sudoku">
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">6</div>
+    <div class="cell">
+      <div class="new">
+        <div class="cell">3</div>
+      </div>
+    </div>
+    <div class="cell">8</div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">2</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">8</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">9</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">5</div>
+      <div class="candidate">6</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">9</div>
+    <div class="cell">1</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">4</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">2</div>
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">4</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">3</div>
+    <div class="cell">1</div>
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">8</div>
+    <div class="cell">6</div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+  </div>
+  <div class="block">
+    <div class="cell">7</div>
+    <div class="cell">5</div>
+    <div class="cell">4</div>
+    <div class="cell">3</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">2</div>
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">8</div>
+    <div class="cell">2</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">6</div>
+    <div class="cell">3</div>
+    <div class="cell">7</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">4</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">5</div>
+    <div class="cell">8</div>
+  </div>
+  <div class="block">
+    <div class="cell">1</div>
+    <div class="cell">2</div>
+    <div class="cell">8</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">4</div>
+    <div class="cell">6</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">9</div>
+    </div>
+  </div>
+  <div class="block">
+    <div class="cell">9</div>
+    <div class="cell">4</div>
+    <div class="cell">5</div>
+    <div class="cell">
+      <div class="candidate">3</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+    </div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+      <div class="candidate">6</div>
+      <div class="candidate">8</div>
+    </div>
+    <div class="cell">7</div>
+    <div class="cell">2</div>
+    <div class="cell">
+      <div class="candidate">1</div>
+      <div class="candidate">3</div>
+    </div>
+  </div>
+</div>
+
+In WFC, our constraints are much less severe than Sudoku
+so we don't hit contradictions very often. Instead of backtracking we
 start the whole process over. It is possible to add backtracking to this
 algorithm, but that is out of the scope of this article.
+
+With WFC our numbers are going to be colors, and our constraints result in
+an image that is consistent with the input sample. We will talk about how
+that works later. And the choice of collapsing the location with the _lowest
+entropy_ (read least number of choices) not only reduces contradictions, but
+makes the process beautiful to watch as it mimics the human tendency to draw
+out from what already exists.
 
 
 ## An Example {#an-example}
@@ -494,7 +1411,7 @@ All of the tiles in the above overlaps initially seem to fit, but you may
 have noticed something odd in `[1 1]`. We noted that for each tile, it
 overlaps with either a tile in `[1 0]` vertically, or `[0 1]`
 horizontally. In fact, all of the tiles match with both, except for one,
-the tile that is all black except for a blue-green pixel on the bottom
+the tile that is all black except for a green pixel on the bottom
 left.
 
 Let's select that tile and see what happens.
@@ -527,7 +1444,7 @@ While it fits now, try to choose a tile from the `[0 1]` offset.
 
 We get a conflict. The tiles in `[0 1]` necessitate that their bottom right
 pixel must be either yellow or black, which is impossible having already
-selected the `[1 1]` tile with the blue-green pixel.
+selected the `[1 1]` tile with the green pixel.
 
 This is how the algorithm enforces _local similarity_. What that means is
 that this arrangement of pixels is never found in the sample image,
@@ -539,5 +1456,5 @@ therefore we do not allow it to appear in the output image.
 
 </div>
 
-We see that there is no place where a yellow pixel borders a blue-green
-one, either cardinally or diagonally.
+We see that there is no place where a yellow pixel borders a green one,
+either cardinally or diagonally.

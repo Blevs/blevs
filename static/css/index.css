@@ -485,3 +485,59 @@ footer section {
 .wave-function-collapse-explained .overlaps .pixel-tiles .pixel-tile {
   max-width: 25%;
 }
+.wave-function-collapse-explained .sudoku {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: white;
+}
+.wave-function-collapse-explained .sudoku .block {
+  border: 1px solid grey;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  background: white;
+}
+.wave-function-collapse-explained .sudoku .block::before {
+  content: '';
+  width: 0;
+  padding-bottom: 100%;
+  grid-row: 1;
+  grid-column: 1;
+}
+.wave-function-collapse-explained .sudoku .block > *:first-child {
+  grid-row: 1;
+  grid-column: 1;
+}
+.wave-function-collapse-explained .sudoku .block .cell {
+  border: 1px solid lightgrey;
+  display: flex;
+  flex-flow: row-wrap;
+  align-items: center;
+  justify-content: center;
+}
+.wave-function-collapse-explained .sudoku .block .cell .candidate {
+  color: grey;
+  font-size: 1.2rem;
+  margin-right: 3px;
+}
+.wave-function-collapse-explained .sudoku .block .cell .error {
+  background: darkred;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.wave-function-collapse-explained .sudoku .block .new {
+  background: green;
+  color: white;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wave-function-collapse-explained .sudoku .block .new .cell {
+  border: none;
+}

@@ -67,4 +67,61 @@
       }
     }
   }
+  .sudoku {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: white;
+    .block {
+      border: 1px solid grey;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: 1fr;
+      background: white;
+      &::before {
+        content: '';
+        width: 0;
+        padding-bottom: 100%;
+        grid-row: 1 / 1;
+        grid-column: 1 / 1;
+      }
+
+      & > *:first-child {
+        grid-row: 1 / 1;
+        grid-column: 1 / 1;
+      }
+      .cell {
+        border: 1px solid lightgrey;
+        display: flex;
+        flex-flow: row-wrap;
+        align-items: center;
+        justify-content: center;
+        .candidate {
+          color: grey;
+          font-size: 1.2rem;
+          margin-right: 3px;
+        }
+        .error {
+          background: darkred;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+        }
+      }
+      .new {
+        background: green;
+        color: white;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .cell {
+          border: none;
+        }
+      }
+    }
+  }
 }
