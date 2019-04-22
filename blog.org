@@ -1615,7 +1615,37 @@
           (-> out .getWriter .toString print)))
     #+end_src
 
-# *** In English, Egon
+*** In English, Egon
+    Consider the [[https://en.wikipedia.org/wiki/Sudoku][Sudoku]], a puzzle
+    based on a grid where each location can be one of a set of numbers that is
+    constrained by the values of the other locations. Sound familiar? It is
+    essentially the same problem we have created for ourselves, but with
+    different constraints.
+    
+    Let's try to, hypothetically, solve one and follow along with our algorithm.
+    We start with a grid where some numbers are already filled in, so we are
+    partially through 3. 
+
+    The first thing we do with a Sudoku is try to find a location where there is
+    only one possible number. This is 3a, in the case of a single possibility.
+
+    Once we have filled it in, we check the rest of locations to see how the
+    changes effects the numbers allowed in them. This is 3b, propagation.
+
+    We restart. Hopefully, we found a another place with only one possibility.
+    If this is a hard Sudoku that may not be the case. Our best bet may be a
+    location where there are two possibilities. We proceed by selecting one at
+    random. This is 3a and what we mean by /collapsing/ to a single value.
+    
+    In Sudoku, we would continue the puzzle until we finish the puzzle or hit a
+    contradiction. At that point, we would know that we chose the wrong value.
+    We would /backtrack/ by erasing anything we had filled in up to that point,
+    and change our selection to the other value.
+
+    In Wave Function Collapse, our constraints are much less severe that Sudoku,
+    so we don't hit contradictions very often and instead of backtracking we
+    start the whole process over. It is possible to add backtracking to this
+    algorithm, but that is out of the scope of this article.
 
 *** An Example
     Let's perform the algorithm to get a better feel of how it work. We are
@@ -1740,7 +1770,11 @@
 
        (def tiles (sample->tiles sample 2))
 
-       (pphtml [:div.pixel-tiles (map #(pixel-tile 2 %) tiles)])
+       (defn pixel-tiles [tile-size tiles]
+         [:div.pixel-tiles (map #(pixel-tile tile-size %) tiles)])
+
+       ;; (pphtml [:div.pixel-tiles (map #(pixel-tile 2 %) tiles)])
+       (pphtml (pixel-tiles 2 tiles))
      #+end_src
 
      #+RESULTS:
@@ -1855,7 +1889,7 @@
      want to know, for every tile, which tiles it can overlap with in all
      directions. Let's take a look at the first tile.
      
-     #+begin_src clojure :results output html :exports none
+     #+begin_src clojure :results output html :exports results
        (defn offsets [tile-size]
          (let [limit (dec tile-size)]
            (for [x (range (- limit) (inc limit))
@@ -1891,16 +1925,346 @@
                    (pairings (range num-tiles))))) 
 
        (defn preprocess [sample-path tile-size & {:keys [permutations?]}]
-         (->> (sample->tiles sample-path tile-size :permutations? true)
+         (->> (sample->tiles (image->2d sample-path) tile-size :permutations? true)
               frequencies
               transpose
               (map vector [:tiles :freqs])
               (into {})))
 
 
+       (def tiles-freqs (preprocess path 2))
 
-       (println (first ((calculate-overlaps tiles))))
+       (def tile-index (some (fn [[i t]]
+                               (when (= t [[-2114975 -2114975] [-2114975 -14211038]]) i))
+                             (map-indexed vector (:tiles tiles-freqs))))
+
+       (def tile-overlaps
+         (-> (preprocess path 2)
+             :tiles
+             calculate-overlaps
+             (nth tile-index)
+             (assoc [0 0] #{tile-index})))
+
+       (def expanded-overlaps (sort-by (comp vec reverse first) 
+                                       (reduce-kv (fn [m k v]
+                              (assoc m k (mapv #(nth (:tiles tiles-freqs) %) v)))
+                            {} tile-overlaps)))
+
+       (pphtml [:div.overlaps (map #(vector :div (str (first %)) (pixel-tiles 2 (second %))) expanded-overlaps)])
      #+end_src
-     
-     This post is in progress. Check back later for the rest of the algorithm.
 
+     #+RESULTS:
+     #+begin_export html
+     <div class="overlaps">
+       <div>[-1 -1]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[0 -1]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[1 -1]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[-1 0]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[0 0]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[1 0]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[-1 1]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[0 1]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+       <div>[1 1]<div class="pixel-tiles">
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#697e6dff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#697e6dff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#697e6dff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+           <div class="pixel-tile" style="--n: 2">
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+             <span class="pixel" style="background-color:#272822ff"> </span>
+             <span class="pixel" style="background-color:#dfba61ff"> </span>
+           </div>
+         </div>
+       </div>
+     </div>
+     #+end_export
+     
+     At no offset, ~[0 0]~, we see the tile in question. At ~[-1 -1]~ are all of
+     the tiles that overlap when shifted left and up once. In other words, for
+     each tile in ~[-1 -1]~, their bottom right pixel matches the top left pixel
+     of the tile at ~[0 0]~.
+     
+
+***** An Optimization
+     
+      We could move on from here, but it turns out some of this information is
+      redundant and noticing this provided a key performance improvement to the
+      algorithm. We don't need to consider any offsets besides left, right, up
+      and down (at least for the 2d case).
+     
+      Take a look at ~[1 1]~. Note that for each tile it either overlaps
+      vertically with a tile in ~[1 0]~, or horizontally with a tile in ~[0 1]~.
+      This should make sense, as the bottom right pixel in ~[0 0]~ would need to
+      match for all three.
+      
+      Therefore, we don't need to consider the diagonal offsets directly as the
+      are already constrained by their adjacent, cardinal offsets. When it comes
+      time to collapse and propagate changes, we only need to consider 4
+      neighbors instead of 8. 
+
+      In other words, any changes we make that would effect tiles allowed in a
+      diagonal offset doesn't need to be handled directly. It will be implicitly
+      by updating the allowed tiles in the cardinal directions and propagating
+      its changes left, right, up or down.
+      
+      If this is confusing, don't worry. We are a little ahead of ourselves, and
+      it will make more sense when we discuss propagation.
+
+***** Local Similarity
+
+      All of the tiles in the above overlaps initially seem to fit, but you may
+      have noticed something odd in ~[1 1]~. We noted that for each tile, it
+      overlaps with either a tile in ~[1 0]~ vertically, or ~[0 1]~
+      horizontally. In fact, all of the tiles match with both, except for one,
+      the tile that is all black except for a blue-green pixel on the bottom
+      left.
+      
+      Let's select that tile and see what happens.
+     
+      #+begin_export html
+      <div class="pixel-tile" style="--n: 3; max-width: 150px;">
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:transparent"> </span>
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:#272822ff"> </span>
+        <span class="pixel" style="background-color:#272822ff"> </span>
+        <span class="pixel" style="background-color:transparent"> </span>
+        <span class="pixel" style="background-color:#697e6dff"> </span>
+        <span class="pixel" style="background-color:#272822ff"> </span>
+      </div>
+      #+end_export
+     
+      While it fits now, try to choose a tile from the ~[0 1]~ offset.
+
+      #+begin_export html
+      <div class="pixel-tile" style="--n: 3; max-width: 150px;">
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:transparent"> </span>
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:#272822ff"> </span>
+        <span class="pixel" style="background-color:#272822ff"> </span>
+        <span class="pixel" style="background-color:#dfba61ff"> </span>
+        <span class="pixel" style="background-color:red"> </span>
+        <span class="pixel" style="background-color:#272822ff"> </span>
+      </div>
+      #+end_export
+     
+      We get a conflict. The tiles in ~[0 1]~ necessitate that their bottom right
+      pixel must be either yellow or black, which is impossible having already
+      selected the ~[1 1]~ tile with the blue-green pixel.
+      
+      This is how the algorithm enforces /local similarity/. What that means is
+      that this arrangement of pixels is never found in the sample image,
+      therefore we do not allow it to appear in the output image.
+     
+      #+begin_export html
+      <div class="scale-sharp">
+      #+end_export
+      [[file:static/img/maze.png]]
+      #+begin_export html
+      </div>
+      #+end_export
+      
+      We see that there is no place where a yellow pixel borders a blue-green
+      one, either cardinally or diagonally.
