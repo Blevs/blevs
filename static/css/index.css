@@ -489,6 +489,8 @@ footer section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   background: white;
+  margin: 0 auto;
+  max-width: 400px;
 }
 .wave-function-collapse-explained .sudoku .block {
   border: 1px solid grey;
@@ -517,8 +519,13 @@ footer section {
 }
 .wave-function-collapse-explained .sudoku .block .cell .candidate {
   color: grey;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
   margin-right: 3px;
+}
+@media (max-width: 400px) {
+  .wave-function-collapse-explained .sudoku .block .cell .candidate {
+    font-size: 0.6rem;
+  }
 }
 .wave-function-collapse-explained .sudoku .block .cell .error {
   background: darkred;

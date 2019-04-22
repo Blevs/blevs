@@ -71,6 +71,8 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     background: white;
+    margin: 0 auto;
+    max-width: 400px;
     .block {
       border: 1px solid grey;
       display: grid;
@@ -97,8 +99,11 @@
         justify-content: center;
         .candidate {
           color: grey;
-          font-size: 1.2rem;
+          font-size: 0.8rem;
           margin-right: 3px;
+          @media (max-width: 400px) {
+            font-size: 0.6rem;
+          }
         }
         .error {
           background: darkred;
