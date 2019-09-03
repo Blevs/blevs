@@ -269,7 +269,6 @@ footer section {
 }
 .portfolio .pieces .piece .img-container {
   width: 30%;
-  background: grey;
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -279,6 +278,7 @@ footer section {
   justify-content: center;
   box-shadow: none;
   border-bottom: none;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVQImWNgYGD4z0AswK4SAFXuAf8EPy+xAAAAAElFTkSuQmCC) repeat, radial-gradient(#00000000, #00000022);
 }
 @media (max-width: 500px) {
   .portfolio .pieces .piece .img-container {
