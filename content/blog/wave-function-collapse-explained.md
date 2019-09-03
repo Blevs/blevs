@@ -982,15 +982,19 @@ so we don't hit contradictions very often. Instead of backtracking we
 start the whole process over. It is possible to add backtracking to this
 algorithm, but that is out of the scope of this article.
 
-With WFC our numbers are going to be colors, and our constraints result in
-an image that is consistent with the input sample. We will talk about how
-that works later. And the choice of collapsing the location with the _lowest
-entropy_ (read least number of choices) not only reduces contradictions, but
-makes the process beautiful to watch as it mimics the human tendency to draw
-out from what already exists.
+With WFC our numbers are going to be colors (but they could be anything),
+and our constraints result in an image that is consistent with the input
+sample. We will talk about how that works later. The choice of collapsing
+the location with the _lowest entropy_ (read least number of choices) not
+only reduces contradictions, but makes the process beautiful to watch as it
+mimics the human tendency to draw out from what already exists.
+
+That is it. We generate a set of rules, collapse each location to a single
+value and propagate the consequences of the collapse with our rules until
+every location has a single value.
 
 
-## An Example {#an-example}
+## Wave Function Collapse {#wave-function-collapse}
 
 Let's perform the algorithm to get a better feel of how it work. We are
 going start with a an image.
@@ -1453,6 +1457,9 @@ therefore we do not allow it to appear in the output image.
 </div>
 
 We see that there is no place where a yellow pixel borders a green one,
-either cardinally or diagonally.
+either cardinally or diagonally, hence the contradiction.
+
+
+### Initializing the Output {#initializing-the-output}
 
 This post is in progress. Check back later for the rest of the algorithm.

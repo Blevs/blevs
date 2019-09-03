@@ -137,11 +137,6 @@
            body)))
    #+end_src
 
-   #+RESULTS:
-   #+begin_src elisp
-   org-babel-expand-body:clojure
-   #+end_src
-   
    #+begin_description
    A quick trip through the world of Clojure while we prepare to implement the
    Wave Function Collapse algorithm and build a frontend with ClojureScript.
@@ -2129,7 +2124,6 @@
     Without knowing any additional Sudoku strategy, we proceed by selecting one
     at random. This is 3a and what we mean by /collapsing/ to a single value.
     
-    
     #+begin_src clojure :exports results :results output html
       (def sudoku-state-choose
         [[[1 2 5] 6 '(3)
@@ -2364,11 +2358,8 @@
     </div>
     #+end_export
 
-    
     In Sudoku, we would continue the puzzle until we finish the puzzle or hit a
     contradiction. 
-
-    
     
     #+begin_src clojure :exports results :results output html
       (def sudoku-state-error
@@ -2519,7 +2510,6 @@
     At that point, we would know that we chose the wrong value. We would
     /backtrack/ by erasing anything we had filled in up to that point, and
     change our selection to the other value.
-    
     
     #+begin_src clojure :exports results :results output html
       (def sudoku-state-correct
@@ -2756,14 +2746,18 @@
     start the whole process over. It is possible to add backtracking to this
     algorithm, but that is out of the scope of this article.
     
-    With WFC our numbers are going to be colors, and our constraints result in
-    an image that is consistent with the input sample. We will talk about how
-    that works later. And the choice of collapsing the location with the /lowest
-    entropy/ (read least number of choices) not only reduces contradictions, but
-    makes the process beautiful to watch as it mimics the human tendency to draw
-    out from what already exists.
+    With WFC our numbers are going to be colors (but they could be anything),
+    and our constraints result in an image that is consistent with the input
+    sample. We will talk about how that works later. The choice of collapsing
+    the location with the /lowest entropy/ (read least number of choices) not
+    only reduces contradictions, but makes the process beautiful to watch as it
+    mimics the human tendency to draw out from what already exists.
     
-*** An Example
+    That is it. We generate a set of rules, collapse each location to a single
+    value and propagate the consequences of the collapse with our rules until
+    every location has a single value.
+    
+*** Wave Function Collapse
     Let's perform the algorithm to get a better feel of how it work. We are
     going start with a an image.
 
@@ -2889,7 +2883,6 @@
        (defn pixel-tiles [tile-size tiles]
          [:div.pixel-tiles (map #(pixel-tile tile-size %) tiles)])
 
-       ;; (pphtml [:div.pixel-tiles (map #(pixel-tile 2 %) tiles)])
        (pphtml (pixel-tiles 2 tiles))
      #+end_src
 
@@ -3383,6 +3376,8 @@
       #+end_export
       
       We see that there is no place where a yellow pixel borders a green one,
-      either cardinally or diagonally.
+      either cardinally or diagonally, hence the contradiction.
+
+**** Initializing the Output
       
       This post is in progress. Check back later for the rest of the algorithm.
