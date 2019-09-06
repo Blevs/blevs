@@ -5,6 +5,7 @@ description = """
   Wave Function Collapse algorithm and build a frontend with ClojureScript.
   """
 date = 2019-04-15T02:03:00-04:00
+lastmod = 2019-09-03T18:27:00-04:00
 tags = ["wfc"]
 draft = false
 +++

@@ -2,6 +2,12 @@
 {{ partial "navigation.html" . }}
 <article class="content post {{.Title|urlize}}">
   <h1>{{.Title}}</h1>
+  <div class="byline">
+    <span class="published">{{ .PublishDate.Format "Jan 2 2006" }}</span>
+    {{ if ne .PublishDate .Lastmod }}
+    <span class="modified">{{ .Lastmod.Format "Jan 2 2006" }}</span>
+    {{ end }}
+  </div>
   <section class="copy">
     {{.Content}}
   </section>

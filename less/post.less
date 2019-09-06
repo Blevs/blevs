@@ -9,6 +9,36 @@
       font-size: 4.0rem;
     }
   }
+  .byline {
+      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 850px;
+      margin: 0 auto;
+      .published, .modified {
+          position: relative;
+          z-index: 2;
+          &::before {
+              position: absolute;
+              top: -1.5rem;
+              font-weight: bold;
+              color: @pencil;
+              font-size: 2.0rem;
+              z-index: -1;
+              font-style: italic;
+              font-family: "Georgia", "Garamond", serif;
+          }
+      }
+      .published::before {
+          content: "published";
+          left: -10px;
+      }
+      .modified::before {
+          content: "modified";
+          right: -10px;
+      }
+  }
   .copy {
     padding: 0 5%;
     box-sizing: border-box;
@@ -28,6 +58,9 @@
     }
     h2, h3, h4, h5 {
       color: @dark;
+    }
+    h3, h4, h5 {
+        padding-top: 25px;
     }
     p {
       padding: 10px 0;

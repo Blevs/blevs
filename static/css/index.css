@@ -338,6 +338,38 @@ footer section {
     font-size: 4rem;
   }
 }
+.post .byline {
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto;
+}
+.post .byline .published,
+.post .byline .modified {
+  position: relative;
+  z-index: 2;
+}
+.post .byline .published::before,
+.post .byline .modified::before {
+  position: absolute;
+  top: -1.5rem;
+  font-weight: bold;
+  color: #dfba61;
+  font-size: 2rem;
+  z-index: -1;
+  font-style: italic;
+  font-family: "Georgia", "Garamond", serif;
+}
+.post .byline .published::before {
+  content: "published";
+  left: -10px;
+}
+.post .byline .modified::before {
+  content: "modified";
+  right: -10px;
+}
 .post .copy {
   padding: 0 5%;
   box-sizing: border-box;
@@ -359,6 +391,11 @@ footer section {
 .post .copy h4,
 .post .copy h5 {
   color: #4A4945;
+}
+.post .copy h3,
+.post .copy h4,
+.post .copy h5 {
+  padding-top: 25px;
 }
 .post .copy p {
   padding: 10px 0;
